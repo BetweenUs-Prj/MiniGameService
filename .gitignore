@@ -1,0 +1,16 @@
+# Java / Gradle
+.gradle/
+build/
+out/
+!gradle/wrapper/**
+
+# Maven
+target/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
