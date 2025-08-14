@@ -1,4 +1,4 @@
-version: '3.8'
+# Compose v2 이상에서는 version 키 불필요(경고 제거용으로 생략)
 
 services:
   app:
@@ -8,27 +8,33 @@ services:
       - "8080:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
-      # MySQL 연결 (db 컨테이너)
+      - SPRING_DATASOURCE_DRIVER_CLASS_NAME=com.mysql.cj.jdbc.Driver
+      # ✅ Redis (Spring Boot 3.x)
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_REDIS_PORT=6379
+      # MySQL
       - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/middle_point_service_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
       - SPRING_DATASOURCE_USERNAME=middle_point_user
       - SPRING_DATASOURCE_PASSWORD=middle_point_password
-      # Redis 연결 (redis 컨테이너)
-      - SPRING_REDIS_HOST=redis
-      - SPRING_REDIS_PORT=6379
-      # Kafka 연결 (kafka 컨테이너)
+      # Kafka
       - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-      # 외부 API 키
-      - KAKAO_API_KEY=${KAKAO_API_KEY}
-      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      # 외부 API 키(없으면 빈값)
+      - KAKAO_API_KEY=${KAKAO_API_KEY:-}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY:-}
+      # Hibernate Dialect(안전장치)
+      - SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT=org.hibernate.dialect.MySQLDialect
     depends_on:
-      - db
-      - redis
-      - kafka
+      db:
+        condition: service_started
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_started
     networks:
       - kdt-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -43,7 +49,7 @@ services:
       - MYSQL_PASSWORD=middle_point_password
       - MYSQL_ROOT_PASSWORD=root_password
     ports:
-      - "3306:3306"
+      - "3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
       - ./init-scripts:/docker-entrypoint-initdb.d
@@ -52,7 +58,8 @@ services:
     restart: unless-stopped
     command: --default-authentication-plugin=mysql_native_password
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      # root 비번 사용해 ping → 더 정확
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$MYSQL_ROOT_PASSWORD --silent"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -69,13 +76,12 @@ services:
       - kdt-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      # PONG 확인하여 0 exit
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 30s
-
-
 
   kafka:
     image: confluentinc/cp-kafka:7.4.0
@@ -98,7 +104,7 @@ services:
       - kdt-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "kafka-topics --bootstrap-server localhost:9092 --list"]
+      test: ["CMD-SHELL", "kafka-topics --bootstrap-server localhost:9092 --list >/dev/null 2>&1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -116,19 +122,18 @@ services:
       - kdt-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "echo ruok | nc localhost 2181"]
+      test: ["CMD-SHELL", "echo ruok | nc localhost 2181 | grep imok"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 30s
 
-  # Nginx 웹 서버 및 로드 밸런서
   nginx:
     image: nginx:alpine
     container_name: middle-point-nginx
     ports:
-      - "80:80"      # HTTP
-      - "443:443"    # HTTPS (선택사항)
+      - "80:80"
+      - "443:443"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
@@ -140,7 +145,7 @@ services:
       - kdt-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      test: ["CMD", "curl", "-fsS", "http://localhost/health"]
       interval: 30s
       timeout: 10s
       retries: 3
