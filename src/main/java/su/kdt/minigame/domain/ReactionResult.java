@@ -1,31 +1,41 @@
 package su.kdt.minigame.domain;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.Setter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "reaction_result")
 @Getter
-@Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED) // Setter를 제거하고, JPA를 위한 기본 생성자 추가
 public class ReactionResult {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // 어떤 게임 세션에 속한 결과인지 연결합니다.
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "session_id", nullable = false)
     private GameSession session;
 
-    @Column(name = "user_id", nullable = false)
-    private Long userId;
+    @Column(name = "user_uid", nullable = false) // MSA를 위해 'user_id' -> 'user_uid' (String)으로 변경
+    private String userUid;
 
-    // 반응 속도를 ms 단위로 저장합니다. (예: 128.5ms)
     @Column(name = "reaction_time", nullable = false)
     private double reactionTime;
 
-    // 게임 종료 후 순위를 기록합니다.
     @Column(name = "ranking")
     private int ranking;
+
+    // 필수 데이터를 받는 생성자 추가
+    public ReactionResult(GameSession session, String userUid, double reactionTime) {
+        this.session = session;
+        this.userUid = userUid;
+        this.reactionTime = reactionTime;
+    }
+
+    // 랭킹을 업데이트하는 특정 메소드 제공
+    public void updateRanking(int ranking) {
+        this.ranking = ranking;
+    }
 }
