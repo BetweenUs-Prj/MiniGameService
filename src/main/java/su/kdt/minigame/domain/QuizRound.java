@@ -1,17 +1,19 @@
 package su.kdt.minigame.domain;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.Setter;
+import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "quiz_round")
 @Getter
-@Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED) // Setter를 제거하고, JPA를 위한 생성자 추가
 public class QuizRound {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "round_id")
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -22,25 +24,13 @@ public class QuizRound {
     @JoinColumn(name = "question_id", nullable = false)
     private QuizQuestion question;
 
-    @Column(name = "winner_user_id")
-    private Long winnerUserId;
-
+    @Column(name = "start_time")
     private LocalDateTime startTime;
-    private LocalDateTime endTime;
 
-    public boolean isClosed() {
-        return this.endTime != null;
-    }
-
-    /**
-     * 승자를 결정하는 로직을 엔티티가 직접 처리합니다.
-     * 이미 승자가 결정되었다면 아무것도 하지 않습니다.
-     * @param userId 새로운 승자 후보의 ID
-     */
-    public void decideWinner(Long userId) {
-        if (!isClosed()) {
-            this.winnerUserId = userId;
-            this.endTime = LocalDateTime.now();
-        }
+    // QuizService에서 사용할 생성자
+    public QuizRound(GameSession session, QuizQuestion question) {
+        this.session = session;
+        this.question = question;
+        this.startTime = LocalDateTime.now();
     }
 }

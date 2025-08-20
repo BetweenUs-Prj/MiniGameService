@@ -1,14 +1,15 @@
 package su.kdt.minigame.domain;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.Setter;
+import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "game_session")
 @Getter
-@Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class GameSession {
 
     public enum GameType { REACTION, QUIZ }
@@ -22,6 +23,9 @@ public class GameSession {
     @Column(name = "appointment_id", nullable = false)
     private Long appointmentId;
 
+    @Column(name = "host_uid", nullable = false) // 방장 ID 필드 추가
+    private String hostUid;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "game_type", nullable = false)
     private GameType gameType;
@@ -33,23 +37,31 @@ public class GameSession {
     private LocalDateTime startTime;
     private LocalDateTime endTime;
 
-    // ===== 아래 생성자를 새로 추가해주세요! =====
+    private String penalty;
     
-    // JPA가 데이터베이스에서 객체를 생성할 때 사용하는 기본 생성자
-    public GameSession() {
-    }
+    @Column(name = "loser_uid")
+    private String loserUid;
 
-    // ReactionGameService에서 새 세션을 만들 때 사용하는 생성자
-    public GameSession(Long appointmentId, GameType gameType) {
+    // 생성자에 hostUid 파라미터 추가
+    public GameSession(Long appointmentId, GameType gameType, String hostUid) {
         this.appointmentId = appointmentId;
         this.gameType = gameType;
+        this.hostUid = hostUid;
     }
-    // ===== 여기까지 추가 =====
 
     public void start() {
         if (this.status == Status.WAITING) {
             this.status = Status.IN_PROGRESS;
             this.startTime = LocalDateTime.now();
+        }
+    }
+
+    public void finishGame(String loserUid, String penalty) {
+        if (this.status == Status.IN_PROGRESS) {
+            this.status = Status.FINISHED;
+            this.endTime = LocalDateTime.now();
+            this.loserUid = loserUid;
+            this.penalty = penalty;
         }
     }
 }

@@ -1,5 +1,8 @@
 package su.kdt.minigame.dto.request;
 
-import java.time.LocalDateTime;
-
-public record SubmitAnswerReq(Long userId, String answerText, LocalDateTime answerTime) {}
+// userId를 userUid로 변경합니다.
+public record SubmitAnswerReq(
+        String userUid,
+        String answerText
+) {
+}

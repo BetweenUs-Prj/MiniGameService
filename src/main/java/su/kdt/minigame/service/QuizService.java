@@ -10,18 +10,15 @@ import su.kdt.minigame.domain.*;
 import su.kdt.minigame.dto.request.CreateRoundReq;
 import su.kdt.minigame.dto.request.CreateSessionReq;
 import su.kdt.minigame.dto.request.SubmitAnswerReq;
-import su.kdt.minigame.dto.response.QuizQuestionResp;
 import su.kdt.minigame.dto.response.AnswerResp;
+import su.kdt.minigame.dto.response.QuizQuestionResp;
 import su.kdt.minigame.dto.response.RoundResp;
 import su.kdt.minigame.dto.response.SessionResp;
 import su.kdt.minigame.repository.*;
 
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.text.Normalizer;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -29,47 +26,32 @@ public class QuizService {
 
     private final GameRepo gameRepo;
     private final QuizRoundRepo roundRepo;
-    private final QuizAnswerRepo answerRepo;
+    private final QuizAnswerRepository answerRepo;
     private final QuizQuestionRepo questionRepo;
     private final QuizQuestionOptionRepo optionRepo;
+    private final PenaltyRepository penaltyRepository;
+    private final GamePenaltyRepository gamePenaltyRepository;
 
     @Transactional
-    public SessionResp createQuizSession(CreateSessionReq req) {
-        GameSession session = new GameSession();
-        session.setAppointmentId(req.appointmentId());
-        session.setGameType(GameSession.GameType.QUIZ);
-        gameRepo.save(session);
-
-        return new SessionResp(
-                session.getId(),
-                session.getAppointmentId(),
-                session.getGameType().name(),
-                session.getStatus().name(),
-                session.getStartTime(),
-                session.getEndTime()
-        );
+    public SessionResp createQuizSession(CreateSessionReq req, String userUid) {
+        GameSession session = new GameSession(req.appointmentId(), GameSession.GameType.QUIZ, userUid);
+        GameSession savedSession = gameRepo.save(session);
+        return SessionResp.from(savedSession);
     }
 
     @Transactional
     public RoundResp startRound(Long sessionId, CreateRoundReq req) {
-        GameSession session = gameRepo.findById(sessionId)
-                .orElseThrow(() -> new IllegalArgumentException("Session not found"));
-
+        GameSession session = findSession(sessionId);
         if (session.getGameType() != GameSession.GameType.QUIZ) {
             throw new IllegalStateException("Not a quiz session");
         }
-        
         session.start();
 
         QuizQuestion question = findQuestion(req.questionId());
+        QuizRound round = new QuizRound(session, question);
+        QuizRound savedRound = roundRepo.save(round);
 
-        QuizRound round = new QuizRound();
-        round.setSession(session);
-        round.setQuestion(question);
-        round.setStartTime(LocalDateTime.now());
-        roundRepo.save(round);
-
-        return new RoundResp(round.getId(), sessionId, round.getStartTime());
+        return RoundResp.from(savedRound);
     }
 
     @Transactional(readOnly = true)
@@ -80,30 +62,65 @@ public class QuizService {
 
     @Transactional
     public AnswerResp submitAnswer(Long roundId, SubmitAnswerReq req) {
-        QuizRound round = roundRepo.findByIdWithLock(roundId)
+        QuizRound round = roundRepo.findById(roundId)
                 .orElseThrow(() -> new IllegalArgumentException("Round not found"));
 
+        QuizAnswer answer = new QuizAnswer(round, req.userUid(), req.answerText());
+
         boolean correct = isCorrect(round.getQuestion(), req.answerText());
-        
-        // 라운드가 이미 종료되었는지 먼저 확인합니다.
-        boolean wasClosed = round.isClosed();
-
-        // 정답이고, 라운드가 아직 열려 있었다면 승자를 결정합니다.
-        if (correct && !wasClosed) {
-            round.decideWinner(req.userId());
-            // roundRepo.save(round); // 변경 감지(Dirty Checking)로 인해 명시적 save 호출은 선택사항
+        if (correct) {
+            long responseTimeMs = ChronoUnit.MILLIS.between(round.getStartTime(), answer.getAnswerTime());
+            answer.grade(true, responseTimeMs);
+        } else {
+            answer.grade(false, 0L);
         }
-        
-        // 답변 기록은 항상 저장합니다.
-        QuizAnswer answer = saveAnswer(round, req, correct);
+        answerRepo.save(answer);
 
-        return new AnswerResp(answer.getId(), correct, round.getWinnerUserId(), round.isClosed());
+        return new AnswerResp(answer.getId(), correct, null, false);
+    }
+
+    @Transactional
+    public void endQuizGame(Long sessionId) {
+        GameSession session = findSession(sessionId);
+        assignQuizPenalty(session);
+    }
+
+    private void assignQuizPenalty(GameSession session) {
+        // TODO: Get the list of all participants for this session
+        List<String> userUids = List.of("user1", "user2"); // Placeholder
+
+        Map<String, Long> userTotalTimes = new HashMap<>();
+        for (String uid : userUids) {
+            Long totalTime = answerRepo.findTotalCorrectResponseTimeByUser(session.getId(), uid);
+            userTotalTimes.put(uid, totalTime != null ? totalTime : Long.MAX_VALUE);
+        }
+
+        String loserUid = Collections.max(userTotalTimes.entrySet(), Map.Entry.comparingByValue()).getKey();
+
+        List<Penalty> allPenalties = penaltyRepository.findAll();
+        if (allPenalties.isEmpty()) {
+            throw new IllegalStateException("No penalties found in the database.");
+        }
+        Collections.shuffle(allPenalties);
+        Penalty selectedPenalty = allPenalties.get(0);
+
+        GamePenalty gamePenalty = new GamePenalty(session, loserUid, selectedPenalty);
+        gamePenaltyRepository.save(gamePenalty);
+
+        session.finishGame(loserUid, selectedPenalty.getDescription());
+    }
+
+    private GameSession findSession(Long sessionId) {
+        return gameRepo.findById(sessionId)
+                .orElseThrow(() -> new IllegalArgumentException("Session not found: " + sessionId));
     }
 
     private QuizQuestion findQuestion(Long questionId) {
         if (questionId == null) {
-            Page<QuizQuestion> page = questionRepo.findAll(PageRequest.of(0, 1));
-            if (page.isEmpty()) throw new IllegalStateException("No quiz questions available");
+            long count = questionRepo.count();
+            if (count == 0) throw new IllegalStateException("No quiz questions available");
+            int randomIdx = new Random().nextInt((int) count);
+            Page<QuizQuestion> page = questionRepo.findAll(PageRequest.of(randomIdx, 1));
             return page.getContent().get(0);
         }
         return questionRepo.findById(questionId)
@@ -124,19 +141,5 @@ public class QuizService {
         if (s == null) return "";
         s = s.trim().replaceAll("\\s+", "").toLowerCase(Locale.ROOT);
         return Normalizer.normalize(s, Normalizer.Form.NFKC);
-    }
-
-    private QuizAnswer saveAnswer(QuizRound round, SubmitAnswerReq req, boolean correct) {
-        QuizAnswer answer = new QuizAnswer();
-        answer.setRound(round);
-        answer.setUserId(req.userId());
-        answer.setAnswerText(req.answerText());
-        answer.setIsCorrect(correct);
-
-        LocalDateTime ldt = req.answerTime() != null ? req.answerTime() : LocalDateTime.now();
-        Instant instant = ldt.atZone(ZoneId.systemDefault()).toInstant();
-        answer.setAnswerTime(instant);
-
-        return answerRepo.save(answer);
     }
 }
