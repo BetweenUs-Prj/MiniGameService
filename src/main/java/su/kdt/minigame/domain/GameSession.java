@@ -20,10 +20,10 @@ public class GameSession {
     @Column(name = "session_id")
     private Long id;
 
-    @Column(name = "appointment_id", nullable = false)
+    @Column(name = "appointment_id")
     private Long appointmentId;
 
-    @Column(name = "host_uid", nullable = false) // 방장 ID 필드 추가
+    @Column(name = "host_uid", nullable = false)
     private String hostUid;
 
     @Enumerated(EnumType.STRING)
@@ -37,16 +37,22 @@ public class GameSession {
     private LocalDateTime startTime;
     private LocalDateTime endTime;
 
-    private String penalty;
-    
-    @Column(name = "loser_uid")
-    private String loserUid;
+    @Column(name = "selected_penalty_id")
+    private Long selectedPenaltyId;
 
-    // 생성자에 hostUid 파라미터 추가
-    public GameSession(Long appointmentId, GameType gameType, String hostUid) {
+    @Column(name = "penalty_description")
+    private String penaltyDescription;
+    
+    @Column(name = "total_rounds")
+    private Integer totalRounds; // ◀◀◀ 퀴즈 문항 수 필드 추가
+
+    // 생성자에서 totalRounds를 받도록 수정
+    public GameSession(Long appointmentId, GameType gameType, String hostUid, Long selectedPenaltyId, Integer totalRounds) {
         this.appointmentId = appointmentId;
         this.gameType = gameType;
         this.hostUid = hostUid;
+        this.selectedPenaltyId = selectedPenaltyId;
+        this.totalRounds = totalRounds;
     }
 
     public void start() {
@@ -55,13 +61,12 @@ public class GameSession {
             this.startTime = LocalDateTime.now();
         }
     }
-
-    public void finishGame(String loserUid, String penalty) {
-        if (this.status == Status.IN_PROGRESS) {
+    
+    public void finish(String penaltyDescription) {
+        if (this.status == Status.IN_PROGRESS || this.status == Status.WAITING) {
             this.status = Status.FINISHED;
             this.endTime = LocalDateTime.now();
-            this.loserUid = loserUid;
-            this.penalty = penalty;
+            this.penaltyDescription = penaltyDescription;
         }
     }
 }

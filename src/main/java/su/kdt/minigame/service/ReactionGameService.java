@@ -1,6 +1,7 @@
 package su.kdt.minigame.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import su.kdt.minigame.domain.*;
@@ -14,6 +15,7 @@ import su.kdt.minigame.repository.ReactionResultRepo;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -22,11 +24,19 @@ public class ReactionGameService {
     private final GameRepo gameRepo;
     private final ReactionResultRepo reactionResultRepo;
     private final GamePenaltyRepository gamePenaltyRepository;
-    // PenaltyRepository는 이제 여기서 직접 사용하지 않으므로 제거해도 됩니다.
+    private final PenaltyRepository penaltyRepository;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @Transactional
     public SessionResp createReactionSession(CreateSessionReq request, String userUid, Penalty selectedPenalty) {
-        GameSession session = new GameSession(request.appointmentId(), GameSession.GameType.REACTION, userUid, selectedPenalty);
+        // ✅ GameSession 생성자 시그니처: (Long appointmentId, GameType, String hostUid, Long penaltyId, Integer totalRounds)
+        GameSession session = new GameSession(
+                request.appointmentId(),
+                GameSession.GameType.REACTION,
+                userUid,
+                selectedPenalty.getId(),
+                1   // 리액션 게임은 1라운드로 고정
+        );
         GameSession savedSession = gameRepo.save(session);
         return SessionResp.from(savedSession);
     }
@@ -43,7 +53,15 @@ public class ReactionGameService {
         ReactionResult result = new ReactionResult(session, userUid, reactionTime);
         reactionResultRepo.save(result);
 
-        // TODO: 실제 약속(appointment)의 참여자 수를 동적으로 가져오는 로직이 필요합니다.
+        String destination = "/topic/game/" + sessionId;
+        Map<String, Object> messagePayload = Map.of(
+                "type", "RESULT_SUBMITTED",
+                "userUid", userUid,
+                "reactionTime", reactionTime
+        );
+        messagingTemplate.convertAndSend(destination, messagePayload);
+
+        // TODO: 약속 참가자 수 동적 조회 필요
         int totalPlayers = 2; // Placeholder
         List<ReactionResult> currentResults = reactionResultRepo.findBySession(session);
 
@@ -53,21 +71,26 @@ public class ReactionGameService {
     }
 
     private void assignPenalty(GameSession session, List<ReactionResult> results) {
+        // 반응 시간이 가장 느린(값이 큰) 사용자가 패자
         ReactionResult loserResult = Collections.max(results, Comparator.comparing(ReactionResult::getReactionTime));
         String loserUid = loserResult.getUserUid();
 
-        // 5. 게임 세션에 미리 정해진 벌칙을 바로 가져옵니다. (로직 단순화)
-        Penalty selectedPenalty = session.getSelectedPenalty();
-        if (selectedPenalty == null) {
-            throw new IllegalStateException("게임에 미리 선택된 벌칙이 없습니다.");
-        }
-        
-        // 6. 벌칙 결과 저장
+        Long penaltyId = session.getSelectedPenaltyId();
+        Penalty selectedPenalty = penaltyRepository.findById(penaltyId)
+                .orElseThrow(() -> new IllegalStateException("Selected penalty not found in DB: " + penaltyId));
+
         GamePenalty gamePenalty = new GamePenalty(session, loserUid, selectedPenalty);
         gamePenaltyRepository.save(gamePenalty);
 
-        // 7. 게임 세션 상태 '종료'로 변경
-        session.finish();
+        session.finish(selectedPenalty.getDescription());
+
+        String destination = "/topic/game/" + session.getId();
+        Map<String, Object> finalResultMessage = Map.of(
+                "type", "GAME_FINISHED",
+                "loserUid", loserUid,
+                "penalty", selectedPenalty.getDescription()
+        );
+        messagingTemplate.convertAndSend(destination, finalResultMessage);
     }
 
     @Transactional(readOnly = true)
