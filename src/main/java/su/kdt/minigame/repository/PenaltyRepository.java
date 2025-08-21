@@ -14,4 +14,7 @@ public interface PenaltyRepository extends JpaRepository<Penalty, Long> {
      * @return 해당 사용자의 벌칙 목록
      */
     List<Penalty> findByUserUid(String userUid);
+
+    // 기본 벌칙(소유자가 없는) 목록을 조회
+    List<Penalty> findByUserUidIsNull();
 }

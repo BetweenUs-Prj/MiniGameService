@@ -1,9 +1,11 @@
+// src/main/java/su/kdt/minigame/service/QuizService.java
 package su.kdt.minigame.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import su.kdt.minigame.domain.*;
@@ -20,21 +22,37 @@ import java.time.temporal.ChronoUnit;
 import java.text.Normalizer;
 import java.util.*;
 
+// ⬇⬇ 추가
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+
 @Service
 @RequiredArgsConstructor
 public class QuizService {
+
+    private record UserScore(String userUid, long correctAnswers, long totalTime) {}
 
     private final GameRepo gameRepo;
     private final QuizRoundRepo roundRepo;
     private final QuizAnswerRepository answerRepo;
     private final QuizQuestionRepo questionRepo;
     private final QuizQuestionOptionRepo optionRepo;
-    private final PenaltyRepository penaltyRepository;
     private final GamePenaltyRepository gamePenaltyRepository;
+    private final PenaltyRepository penaltyRepository;
+    private final SimpMessagingTemplate messagingTemplate;
+
+    // ⬇⬇ 추가: 리포지토리 메서드 유무 상관없이 JPQL로 계산
+    @PersistenceContext
+    private EntityManager em;
 
     @Transactional
     public SessionResp createQuizSession(CreateSessionReq req, String userUid) {
-        GameSession session = new GameSession(req.appointmentId(), GameSession.GameType.QUIZ, userUid);
+        final int DEFAULT_ROUNDS = 5;
+        Integer totalRounds = (req.totalRounds() != null && req.totalRounds() > 0)
+                ? req.totalRounds()
+                : DEFAULT_ROUNDS;
+
+        GameSession session = new GameSession(req.appointmentId(), GameSession.GameType.QUIZ, userUid, req.penaltyId(), totalRounds);
         GameSession savedSession = gameRepo.save(session);
         return SessionResp.from(savedSession);
     }
@@ -51,6 +69,14 @@ public class QuizService {
         QuizRound round = new QuizRound(session, question);
         QuizRound savedRound = roundRepo.save(round);
 
+        String destination = "/topic/game/" + sessionId;
+        Map<String, Object> messagePayload = Map.of(
+                "type", "NEW_ROUND_STARTED",
+                "roundId", savedRound.getId(),
+                "question", QuizQuestionResp.from(savedRound.getQuestion())
+        );
+        messagingTemplate.convertAndSend(destination, messagePayload);
+
         return RoundResp.from(savedRound);
     }
 
@@ -64,6 +90,7 @@ public class QuizService {
     public AnswerResp submitAnswer(Long roundId, SubmitAnswerReq req) {
         QuizRound round = roundRepo.findById(roundId)
                 .orElseThrow(() -> new IllegalArgumentException("Round not found"));
+        GameSession session = round.getSession();
 
         QuizAnswer answer = new QuizAnswer(round, req.userUid(), req.answerText());
 
@@ -76,9 +103,20 @@ public class QuizService {
         }
         answerRepo.save(answer);
 
+        // ⬇⬇ 변경: 리포지토리 메서드 의존 제거 (JPQL로 라운드 수 집계)
+        long currentRoundCount = em.createQuery(
+                "select count(r) from QuizRound r where r.session = :session", Long.class)
+                .setParameter("session", session)
+                .getSingleResult();
+
+        if (session.getTotalRounds() != null && currentRoundCount >= session.getTotalRounds()) {
+            assignQuizPenalty(session);
+        }
+
         return new AnswerResp(answer.getId(), correct, null, false);
     }
 
+    // ⬇⬇ 추가: 컨트롤러가 호출하는 강제 종료용 메서드
     @Transactional
     public void endQuizGame(Long sessionId) {
         GameSession session = findSession(sessionId);
@@ -86,28 +124,58 @@ public class QuizService {
     }
 
     private void assignQuizPenalty(GameSession session) {
-        // TODO: Get the list of all participants for this session
+        // TODO: 약속 참가자 목록 조회 로직
         List<String> userUids = List.of("user1", "user2"); // Placeholder
 
-        Map<String, Long> userTotalTimes = new HashMap<>();
+        List<UserScore> scores = new ArrayList<>();
         for (String uid : userUids) {
-            Long totalTime = answerRepo.findTotalCorrectResponseTimeByUser(session.getId(), uid);
-            userTotalTimes.put(uid, totalTime != null ? totalTime : Long.MAX_VALUE);
+            // ⬇⬇ 변경: JPQL로 정답 수/합계 응답시간 계산 (리포지토리 메서드 없어도 동작)
+            Long correctCount = em.createQuery(
+                    "select count(a) from QuizAnswer a " +
+                    "where a.round.session.id = :sid and a.userUid = :uid and a.isCorrect = true",
+                    Long.class)
+                    .setParameter("sid", session.getId())
+                    .setParameter("uid", uid)
+                    .getSingleResult();
+
+            Long totalTime = em.createQuery(
+                    "select coalesce(sum(a.responseTimeMs), 0) from QuizAnswer a " +
+                    "where a.round.session.id = :sid and a.userUid = :uid and a.isCorrect = true",
+                    Long.class)
+                    .setParameter("sid", session.getId())
+                    .setParameter("uid", uid)
+                    .getSingleResult();
+
+            scores.add(new UserScore(
+                    uid,
+                    correctCount != null ? correctCount : 0L,
+                    totalTime != null ? totalTime : 0L
+            ));
         }
 
-        String loserUid = Collections.max(userTotalTimes.entrySet(), Map.Entry.comparingByValue()).getKey();
+        // 정답 수 ↑, 동률이면 총 응답시간 ↓가 유리 → 패자 선정은 오름차순 정렬 후 첫 번째
+        scores.sort(Comparator
+                .comparing(UserScore::correctAnswers)
+                .thenComparing(UserScore::totalTime, Comparator.reverseOrder()));
 
-        List<Penalty> allPenalties = penaltyRepository.findAll();
-        if (allPenalties.isEmpty()) {
-            throw new IllegalStateException("No penalties found in the database.");
-        }
-        Collections.shuffle(allPenalties);
-        Penalty selectedPenalty = allPenalties.get(0);
+        String loserUid = scores.get(0).userUid();
+
+        Long penaltyId = session.getSelectedPenaltyId();
+        Penalty selectedPenalty = penaltyRepository.findById(penaltyId)
+                .orElseThrow(() -> new IllegalStateException("Selected penalty not found in DB: " + penaltyId));
 
         GamePenalty gamePenalty = new GamePenalty(session, loserUid, selectedPenalty);
         gamePenaltyRepository.save(gamePenalty);
 
-        session.finishGame(loserUid, selectedPenalty.getDescription());
+        session.finish(selectedPenalty.getDescription());
+
+        String destination = "/topic/game/" + session.getId();
+        Map<String, Object> messagePayload = Map.of(
+                "type", "GAME_FINISHED",
+                "loserUid", loserUid,
+                "penalty", selectedPenalty.getDescription()
+        );
+        messagingTemplate.convertAndSend(destination, messagePayload);
     }
 
     private GameSession findSession(Long sessionId) {

@@ -18,12 +18,16 @@ public class Penalty {
     @Column(name = "description")
     private String description;
 
-    // ===== 이 필드를 추가합니다! =====
     @Column(name = "user_uid")
-    private String userUid; // 이 벌칙을 생성한 사용자의 ID
+    private String userUid;
 
     public Penalty(String description, String userUid) {
         this.description = description;
         this.userUid = userUid;
+    }
+    
+    // 내용을 업데이트하는 메소드 추가
+    public void updateDescription(String newDescription) {
+        this.description = newDescription;
     }
 }
