@@ -22,30 +22,23 @@ public class GameSessionService {
 
     @Transactional
     public SessionResp createSession(CreateSessionReq request, String userUid) {
-
-        // 벌칙 존재 검증(두 게임 공통)
         Penalty selectedPenalty = penaltyRepository.findById(request.penaltyId())
                 .orElseThrow(() -> new IllegalArgumentException("Penalty not found: " + request.penaltyId()));
 
         String gameType = request.gameType();
 
-        if ("REACTION".equalsIgnoreCase(gameType)) {
-            // 리액션은 기존 시그니처 유지(선택 벌칙 엔티티 전달)
+        if ("REACTION".equals(gameType)) {
             return reactionGameService.createReactionSession(request, userUid, selectedPenalty);
 
-        } else if ("QUIZ".equalsIgnoreCase(gameType)) {
-            // ❗ QUIZ는 QuizService 시그니처가 (req, userUid) 입니다.
-            //    penaltyId / totalRounds는 req 내부에서 사용합니다.
-            return quizService.createQuizSession(request, userUid);
+        } else if ("QUIZ".equals(gameType)) {
+            // ◀◀◀ 이 부분에 selectedPenalty를 전달해야 합니다.
+            return quizService.createQuizSession(request, userUid, selectedPenalty);
 
         } else {
             throw new IllegalArgumentException("지원하지 않는 게임 타입입니다: " + gameType);
         }
     }
 
-    /**
-     * 특정 게임 세션에 할당된 벌칙 결과를 조회합니다.
-     */
     @Transactional(readOnly = true)
     public GamePenaltyResp getGamePenalty(Long sessionId) {
         GamePenalty gamePenalty = gamePenaltyRepository.findByGameSessionId(sessionId)

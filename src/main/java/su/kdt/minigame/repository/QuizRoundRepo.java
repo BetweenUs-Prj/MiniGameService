@@ -14,7 +14,15 @@ import java.util.Optional;
 public interface QuizRoundRepo extends JpaRepository<QuizRound, Long> {
     List<QuizRound> findBySession(GameSession session);
 
+    // ✅ 자동 종료 로직에서 사용
+    long countBySession(GameSession session);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT r FROM QuizRound r WHERE r.id = :roundId")
     Optional<QuizRound> findByIdWithLock(@Param("roundId") Long roundId);
+
+    /**
+     * 특정 게임 세션의 가장 마지막 라운드를 찾습니다.
+     */
+    Optional<QuizRound> findTopBySessionOrderByIdDesc(GameSession session);
 }

@@ -13,16 +13,15 @@ import su.kdt.minigame.dto.response.RoundResp;
 import su.kdt.minigame.service.QuizService;
 
 @RestController
-@RequestMapping("/api/mini-games") // Base path for all minigame APIs
+@RequestMapping("/api/mini-games")
 @RequiredArgsConstructor
 public class QuizController {
 
     private final QuizService quizService;
 
-    // Session creation is now handled by GameSessionController and has been removed from here.
-
     /**
-     * Starts a new round for a specific quiz game session.
+     * 특정 퀴즈 게임 세션에 대한 새로운 라운드를 시작합니다.
+     * 모든 참여자가 이전 라운드의 답을 제출해야만 시작할 수 있습니다.
      */
     @PostMapping("/sessions/{sessionId}/rounds")
     public ResponseEntity<RoundResp> startRound(@PathVariable Long sessionId, @RequestBody CreateRoundReq request) {
@@ -31,25 +30,17 @@ public class QuizController {
     }
 
     /**
-     * Submits a user's answer for a specific quiz round.
+     * 특정 퀴즈 라운드에 대한 사용자의 답변을 제출합니다.
+     * 정해진 라운드가 모두 끝나면 게임이 자동으로 종료되고 벌칙이 부여됩니다.
      */
     @PostMapping("/rounds/{roundId}/answers")
     public ResponseEntity<AnswerResp> submitAnswer(@PathVariable Long roundId, @RequestBody SubmitAnswerReq request) {
         AnswerResp response = quizService.submitAnswer(roundId, request);
         return ResponseEntity.ok(response);
     }
-    
-    /**
-     * Ends a quiz game session, triggering penalty assignment.
-     */
-    @PostMapping("/sessions/{sessionId}/end") // ◀◀◀ NEW API ENDPOINT
-    public ResponseEntity<Void> endQuizGame(@PathVariable Long sessionId) {
-        quizService.endQuizGame(sessionId);
-        return ResponseEntity.ok().build();
-    }
 
     /**
-     * Retrieves a paginated list of available quiz questions.
+     * 페이징 처리된 퀴즈 질문 목록을 조회합니다.
      */
     @GetMapping("/questions")
     public ResponseEntity<Page<QuizQuestionResp>> getQuestions(
