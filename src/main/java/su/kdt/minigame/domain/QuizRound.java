@@ -9,8 +9,15 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "quiz_round")
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED) // Setter를 제거하고, JPA를 위한 생성자 추가
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class QuizRound {
+
+    // ===== Status Enum 추가 =====
+    public enum Status {
+        IN_PROGRESS, // 진행중
+        COMPLETED    // 모든 참여자가 답변을 제출하여 완료됨
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "round_id")
@@ -27,10 +34,21 @@ public class QuizRound {
     @Column(name = "start_time")
     private LocalDateTime startTime;
 
-    // QuizService에서 사용할 생성자
+    // ===== status 필드 추가 =====
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status")
+    private Status status = Status.IN_PROGRESS;
+
     public QuizRound(GameSession session, QuizQuestion question) {
         this.session = session;
         this.question = question;
         this.startTime = LocalDateTime.now();
+    }
+
+    // ===== 라운드를 완료 상태로 바꾸는 메소드 추가 =====
+    public void complete() {
+        if (this.status == Status.IN_PROGRESS) {
+            this.status = Status.COMPLETED;
+        }
     }
 }

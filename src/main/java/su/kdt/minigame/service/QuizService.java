@@ -1,4 +1,3 @@
-// src/main/java/su/kdt/minigame/service/QuizService.java
 package su.kdt.minigame.service;
 
 import lombok.RequiredArgsConstructor;
@@ -18,13 +17,10 @@ import su.kdt.minigame.dto.response.RoundResp;
 import su.kdt.minigame.dto.response.SessionResp;
 import su.kdt.minigame.repository.*;
 
+import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.text.Normalizer;
 import java.util.*;
-
-// ⬇⬇ 추가
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 
 @Service
 @RequiredArgsConstructor
@@ -41,18 +37,14 @@ public class QuizService {
     private final PenaltyRepository penaltyRepository;
     private final SimpMessagingTemplate messagingTemplate;
 
-    // ⬇⬇ 추가: 리포지토리 메서드 유무 상관없이 JPQL로 계산
-    @PersistenceContext
-    private EntityManager em;
-
     @Transactional
-    public SessionResp createQuizSession(CreateSessionReq req, String userUid) {
+    public SessionResp createQuizSession(CreateSessionReq req, String userUid, Penalty selectedPenalty) {
         final int DEFAULT_ROUNDS = 5;
         Integer totalRounds = (req.totalRounds() != null && req.totalRounds() > 0)
                 ? req.totalRounds()
                 : DEFAULT_ROUNDS;
 
-        GameSession session = new GameSession(req.appointmentId(), GameSession.GameType.QUIZ, userUid, req.penaltyId(), totalRounds);
+        GameSession session = new GameSession(req.appointmentId(), GameSession.GameType.QUIZ, userUid, selectedPenalty.getId(), totalRounds);
         GameSession savedSession = gameRepo.save(session);
         return SessionResp.from(savedSession);
     }
@@ -63,6 +55,12 @@ public class QuizService {
         if (session.getGameType() != GameSession.GameType.QUIZ) {
             throw new IllegalStateException("Not a quiz session");
         }
+
+        Optional<QuizRound> latestRoundOpt = roundRepo.findTopBySessionOrderByIdDesc(session);
+        if (latestRoundOpt.isPresent() && latestRoundOpt.get().getStatus() != QuizRound.Status.COMPLETED) {
+            throw new IllegalStateException("아직 이전 라운드가 끝나지 않았습니다. 모든 참여자가 답변을 제출해야 합니다.");
+        }
+
         session.start();
 
         QuizQuestion question = findQuestion(req.questionId());
@@ -96,56 +94,37 @@ public class QuizService {
 
         boolean correct = isCorrect(round.getQuestion(), req.answerText());
         if (correct) {
-            long responseTimeMs = ChronoUnit.MILLIS.between(round.getStartTime(), answer.getAnswerTime());
+            long responseTimeMs = ChronoUnit.MILLIS.between(round.getStartTime().toInstant(ZoneOffset.UTC), answer.getAnswerTime());
             answer.grade(true, responseTimeMs);
         } else {
             answer.grade(false, 0L);
         }
         answerRepo.save(answer);
 
-        // ⬇⬇ 변경: 리포지토리 메서드 의존 제거 (JPQL로 라운드 수 집계)
-        long currentRoundCount = em.createQuery(
-                "select count(r) from QuizRound r where r.session = :session", Long.class)
-                .setParameter("session", session)
-                .getSingleResult();
+        int totalPlayers = 2; // Placeholder
+        long answeredPlayers = answerRepo.countDistinctUserUidsByRound(round);
 
-        if (session.getTotalRounds() != null && currentRoundCount >= session.getTotalRounds()) {
-            assignQuizPenalty(session);
+        if (answeredPlayers >= totalPlayers) {
+            round.complete();
         }
 
+        long currentRoundCount = roundRepo.countBySession(session);
+        if (session.getTotalRounds() != null && currentRoundCount >= session.getTotalRounds()) {
+            if (round.getStatus() == QuizRound.Status.COMPLETED) {
+                assignQuizPenalty(session);
+            }
+        }
+        
         return new AnswerResp(answer.getId(), correct, null, false);
     }
 
-    // ⬇⬇ 추가: 컨트롤러가 호출하는 강제 종료용 메서드
-    @Transactional
-    public void endQuizGame(Long sessionId) {
-        GameSession session = findSession(sessionId);
-        assignQuizPenalty(session);
-    }
-
     private void assignQuizPenalty(GameSession session) {
-        // TODO: 약속 참가자 목록 조회 로직
         List<String> userUids = List.of("user1", "user2"); // Placeholder
 
         List<UserScore> scores = new ArrayList<>();
         for (String uid : userUids) {
-            // ⬇⬇ 변경: JPQL로 정답 수/합계 응답시간 계산 (리포지토리 메서드 없어도 동작)
-            Long correctCount = em.createQuery(
-                    "select count(a) from QuizAnswer a " +
-                    "where a.round.session.id = :sid and a.userUid = :uid and a.isCorrect = true",
-                    Long.class)
-                    .setParameter("sid", session.getId())
-                    .setParameter("uid", uid)
-                    .getSingleResult();
-
-            Long totalTime = em.createQuery(
-                    "select coalesce(sum(a.responseTimeMs), 0) from QuizAnswer a " +
-                    "where a.round.session.id = :sid and a.userUid = :uid and a.isCorrect = true",
-                    Long.class)
-                    .setParameter("sid", session.getId())
-                    .setParameter("uid", uid)
-                    .getSingleResult();
-
+            Long correctCount = answerRepo.countCorrectAnswersByUser(session.getId(), uid);
+            Long totalTime = answerRepo.findTotalCorrectResponseTimeByUser(session.getId(), uid);
             scores.add(new UserScore(
                     uid,
                     correctCount != null ? correctCount : 0L,
@@ -153,7 +132,6 @@ public class QuizService {
             ));
         }
 
-        // 정답 수 ↑, 동률이면 총 응답시간 ↓가 유리 → 패자 선정은 오름차순 정렬 후 첫 번째
         scores.sort(Comparator
                 .comparing(UserScore::correctAnswers)
                 .thenComparing(UserScore::totalTime, Comparator.reverseOrder()));
@@ -204,7 +182,7 @@ public class QuizService {
                 .map(o -> normalize(o.getOptionText()))
                 .anyMatch(normalizedAnswer::equals);
     }
-
+    
     private String normalize(String s) {
         if (s == null) return "";
         s = s.trim().replaceAll("\\s+", "").toLowerCase(Locale.ROOT);
