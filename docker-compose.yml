@@ -49,14 +49,14 @@ services:
       - MYSQL_PASSWORD=middle_point_password
       - MYSQL_ROOT_PASSWORD=root_password
     ports:
-      - "3307:3306"
+      - "13307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
       - ./init-scripts:/docker-entrypoint-initdb.d
     networks:
       - kdt-network
     restart: unless-stopped
-    command: --default-authentication-plugin=mysql_native_password
+    command: --default-authentication-plugin=mysql_native_password --skip-name-resolve
     healthcheck:
       # root 비번 사용해 ping → 더 정확
       test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$MYSQL_ROOT_PASSWORD --silent"]
