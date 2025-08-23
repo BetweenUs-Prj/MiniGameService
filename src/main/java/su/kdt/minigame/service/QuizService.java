@@ -188,4 +188,44 @@ public class QuizService {
         s = s.trim().replaceAll("\\s+", "").toLowerCase(Locale.ROOT);
         return Normalizer.normalize(s, Normalizer.Form.NFKC);
     }
+
+    @Transactional
+    public Long startRound(Long sessionId, String category) {
+        GameSession session = findSession(sessionId);
+        if (session.getGameType() != GameSession.GameType.QUIZ) {
+            throw new IllegalStateException("Not a quiz session");
+        }
+
+        // Check if there's an ongoing round
+        Optional<QuizRound> latestRoundOpt = roundRepo.findTopBySessionOrderByIdDesc(session);
+        if (latestRoundOpt.isPresent() && latestRoundOpt.get().getStatus() != QuizRound.Status.COMPLETED) {
+            throw new IllegalStateException("아직 이전 라운드가 끝나지 않았습니다. 모든 참여자가 답변을 제출해야 합니다.");
+        }
+
+        session.start();
+
+        // Find a random question from the specified category
+        Page<QuizQuestion> questionsPage = questionRepo.search(null, category, PageRequest.of(0, 100));
+        List<QuizQuestion> questions = questionsPage.getContent();
+        
+        if (questions.isEmpty()) {
+            throw new IllegalStateException("No questions found for category: " + category);
+        }
+        
+        QuizQuestion question = questions.get(new Random().nextInt(questions.size()));
+        
+        QuizRound round = new QuizRound(session, question);
+        QuizRound savedRound = roundRepo.save(round);
+
+        // Send WebSocket notification
+        String destination = "/topic/game/" + sessionId;
+        Map<String, Object> messagePayload = Map.of(
+                "type", "NEW_ROUND_STARTED",
+                "roundId", savedRound.getId(),
+                "question", QuizQuestionResp.from(savedRound.getQuestion())
+        );
+        messagingTemplate.convertAndSend(destination, messagePayload);
+
+        return savedRound.getId();
+    }
 }

@@ -6,6 +6,13 @@ spring:
     name: minigame-service
   jpa:
     open-in-view: false
+    hibernate:
+      ddl-auto: none
+    defer-datasource-initialization: true
+  sql:
+    init:
+      mode: always
+      encoding: UTF-8
 
 management:
   endpoints:

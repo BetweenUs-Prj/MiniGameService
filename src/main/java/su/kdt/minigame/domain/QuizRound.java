@@ -21,11 +21,10 @@ public class QuizRound {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "round_id")
-    private Long id;
+    private Long roundId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "session_id", nullable = false)
-    private GameSession session;
+    @Column(name = "session_id", nullable = false)
+    private Long sessionId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "question_id", nullable = false)
@@ -39,8 +38,8 @@ public class QuizRound {
     @Column(name = "status")
     private Status status = Status.IN_PROGRESS;
 
-    public QuizRound(GameSession session, QuizQuestion question) {
-        this.session = session;
+    public QuizRound(Long sessionId, QuizQuestion question) {
+        this.sessionId = sessionId;
         this.question = question;
         this.startTime = LocalDateTime.now();
     }

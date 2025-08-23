@@ -11,15 +11,16 @@ import lombok.Setter;
 public class QuizQuestionOption {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "option_id")
+    private Long optionId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "question_id", nullable = false)
     private QuizQuestion question;
 
-    @Column(nullable = false)
+    @Column(name = "option_text", nullable = false)
     private String optionText;
 
-    @Column(nullable = false)
-    private boolean isCorrect;
+    @Column(name = "is_correct", nullable = false)
+    private Boolean isCorrect;
 }

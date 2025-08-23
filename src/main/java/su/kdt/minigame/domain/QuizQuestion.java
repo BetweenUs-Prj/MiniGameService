@@ -17,7 +17,7 @@ public class QuizQuestion {
     @Column(name = "place_id")
     private Long placeId;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Column(name = "question_text", nullable = false, columnDefinition = "TEXT")
     private String questionText;
 
     private String category;

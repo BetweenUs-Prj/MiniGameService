@@ -36,6 +36,16 @@ public class PenaltyService {
     }
 
     /**
+     * 사용자가 새로운 벌칙을 생성하고 ID를 반환합니다.
+     */
+    @Transactional
+    public Long createPenalty(String description, String userUid, boolean returnId) {
+        Penalty penalty = new Penalty(description, userUid);
+        penalty = penaltyRepository.save(penalty);
+        return penalty.getId();
+    }
+
+    /**
      * 사용자가 자신이 만든 벌칙을 수정합니다.
      */
     @Transactional
