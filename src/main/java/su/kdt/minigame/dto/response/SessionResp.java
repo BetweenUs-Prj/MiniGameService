@@ -9,7 +9,9 @@ public record SessionResp(
         String gameType,
         String status,
         LocalDateTime startTime,
-        LocalDateTime endTime
+        LocalDateTime endTime,
+        String category,
+        Integer totalRounds
 ) {
     // ===== 아래 메소드를 새로 추가해주세요! =====
     public static SessionResp from(GameSession session) {
@@ -19,7 +21,9 @@ public record SessionResp(
                 session.getGameType().name(), // Enum을 String으로 변환
                 session.getStatus().name(),   // Enum을 String으로 변환
                 session.getStartTime(),
-                session.getEndTime()
+                session.getEndTime(),
+                session.getCategory(),
+                session.getTotalRounds()
         );
     }
     // ===== 여기까지 추가 =====

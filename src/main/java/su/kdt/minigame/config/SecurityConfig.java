@@ -33,11 +33,51 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:5174", "http://127.0.0.1:5174"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("Content-Type", "X-USER-UID", "Authorization", "*"));
-        configuration.setExposedHeaders(Arrays.asList("Location"));
+        
+        // 🚀 개발 환경에서 모든 localhost 포트 허용 (타임아웃 재시도 지원)
+        configuration.setAllowedOriginPatterns(Arrays.asList(
+            "http://localhost:*", 
+            "http://127.0.0.1:*",
+            "https://localhost:*", 
+            "https://127.0.0.1:*"
+        ));
+        
+        // 🔥 더 광범위한 HTTP 메서드 허용
+        configuration.setAllowedMethods(Arrays.asList(
+            "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"
+        ));
+        
+        // 💡 타임아웃 재시도 시 필요한 모든 헤더 허용
+        configuration.setAllowedHeaders(Arrays.asList(
+            "Content-Type", 
+            "X-USER-UID", 
+            "uid", // 임시 호환성 헤더
+            "Authorization", 
+            "X-Requested-With",
+            "Accept",
+            "Origin",
+            "Access-Control-Request-Method",
+            "Access-Control-Request-Headers",
+            "Cache-Control",
+            "Connection", // 타임아웃 처리 시 필요
+            "*"
+        ));
+        
+        // ⚡ 클라이언트에서 접근 가능한 응답 헤더 확장
+        configuration.setExposedHeaders(Arrays.asList(
+            "Location", 
+            "X-USER-UID", 
+            "uid",
+            "X-Request-ID", 
+            "X-Response-Time",
+            "Access-Control-Allow-Origin",
+            "Access-Control-Allow-Credentials"
+        ));
+        
         configuration.setAllowCredentials(true);
+        
+        // 🚀 preflight 캐시 시간 증가 (성능 향상)
+        configuration.setMaxAge(7200L); // 2시간
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

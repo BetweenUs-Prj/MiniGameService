@@ -1,849 +1,1533 @@
--- Category seed data - ensure categories exist before inserting questions
-INSERT INTO category (name)
-SELECT * FROM (SELECT '술') t
-WHERE NOT EXISTS (SELECT 1 FROM category WHERE name='술');
-
-INSERT INTO category (name)
-SELECT * FROM (SELECT '역사') t
-WHERE NOT EXISTS (SELECT 1 FROM category WHERE name='역사');
-
-INSERT INTO category (name)
-SELECT * FROM (SELECT '스포츠') t
-WHERE NOT EXISTS (SELECT 1 FROM category WHERE name='스포츠');
-
-INSERT INTO category (name)
-SELECT * FROM (SELECT '음식') t
-WHERE NOT EXISTS (SELECT 1 FROM category WHERE name='음식');
-
-INSERT INTO category (name)
-SELECT * FROM (SELECT '상식') t
-WHERE NOT EXISTS (SELECT 1 FROM category WHERE name='상식');
+-- 기본 벌칙 데이터 (테스트용) - AUTO_INCREMENT 충돌 방지를 위해 ID 제거
+INSERT INTO penalty (user_uid, penalty_text, created_at) VALUES 
+('system', '커피 한 잔 사기', CURRENT_TIMESTAMP),
+('system', '아이스크림 사기', CURRENT_TIMESTAMP),
+('system', '치킨 한 마리 사기', CURRENT_TIMESTAMP),
+('system', '노래 한 곡 부르기', CURRENT_TIMESTAMP),
+('system', '댄스 한 곡 추기', CURRENT_TIMESTAMP);
 
 -- 샘플 퀴즈 문제들
+-- 상식 퀴즈
+SET NAMES utf8mb4;
+START TRANSACTION;
+INSERT INTO quiz_question (question_text, category) VALUES ('지구에서 가장 깊은 바다는 어디일까요?', '상식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '마리아나 해구', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '대서양', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '인도양', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '베링해', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('대한민국의 국화는 무엇일까요?', '상식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '무궁화', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '장미', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '국화', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '개나리', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('빛의 속도는 초당 약 얼마일까요?', '상식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '약 30만 km/s', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '약 3만 km/s', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '약 300 km/s', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '약 30 km/s', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('물의 화학식은 무엇일까요?', '상식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, 'H2O', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, 'CO2', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, 'O2', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, 'NaCl', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('세계에서 가장 큰 사막은 어디일까요?', '상식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '사하라', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '고비', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '아라비아', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '안타르크티카', TRUE);
+INSERT INTO quiz_question (question_text, category) VALUES ('한글을 창제한 왕은 누구일까요?', '상식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '세종대왕', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '태종', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '영조', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '정조', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('원주율 π는 소수점 둘째 자리까지 얼마일까요?', '상식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '3.14', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '3.15', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '3.13', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '3.16', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('대한민국의 전화 국가번호는 무엇일까요?', '상식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '+82', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '+81', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '+86', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '+852', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('인간의 몸에서 가장 큰 장기는 무엇일까요?', '상식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '간', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '심장', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '폐', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '콩팥', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('초코렛의 주 원료는 무엇일까요?', '상식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '카카오', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '커피', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '바닐라', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '사탕수수', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('세계에서 인구가 가장 많은 국가는?', '상식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '중국', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '인도', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '미국', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '인도네시아', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('대한민국 국기의 이름은?', '상식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '태극기', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '무궁화기', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '한반도기', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '대한기', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('바이올린은 몇 현 악기일까요?', '상식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '4현', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '5현', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '6현', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '3현', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('태양계에서 가장 큰 행성은?', '상식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '목성', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '토성', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '천왕성', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '해왕성', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('에펠탑이 있는 도시는?', '상식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '파리', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '런던', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '베를린', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '로마', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('대한민국 헌법상 수도는?', '상식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '명시되어 있지 않다', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '서울', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '세종', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '부산', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('와이파이에 쓰이는 주파수 대역이 아닌 것은?', '상식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1GHz', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '2.4GHz', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '5GHz', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '6GHz', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('인터넷에서 ''HTTP''의 H는 무엇을 의미할까요?', '상식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, 'Hyper', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, 'High', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, 'Host', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, 'Home', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('세계 3대 미항에 포함되지 않는 곳은?', '상식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '시드니', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '리우데자네이루', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '나폴리', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '뉴욕', TRUE);
+INSERT INTO quiz_question (question_text, category) VALUES ('섭씨 0도는 물의 어떤 상태일까요?', '상식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '어는점', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '끓는점', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '승화점', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '응축점', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('우리 몸의 골격을 이루는 주요 물질은?', '상식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '칼슘', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '철', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '나트륨', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '마그네슘', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('대한민국의 국보 1호는 현재 무엇으로 지정되어 있나요?', '상식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '숭례문', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '흥인지문', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '석굴암', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '팔만대장경', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('컴퓨터의 CPU가 수행하는 연산 단위는?', '상식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '클럭', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '프레임', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '패킷', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '픽셀', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('세계 최초의 인공위성 스푸트니크를 발사한 나라는?', '상식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '소련', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '미국', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '프랑스', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '영국', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('지구의 대기에서 가장 많은 기체는?', '상식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '질소', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '산소', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '이산화탄소', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '아르곤', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('가장 단단한 천연 물질은?', '상식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '다이아몬드', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '강철', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '루비', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '사파이어', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('물의 끓는점은 표준기압에서 몇 도?', '상식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '100도', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '90도', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '80도', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '120도', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('대한민국의 평균 전원 주파수는?', '상식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '60Hz', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '50Hz', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '55Hz', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '65Hz', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('망원경을 만든 과학자로 알려진 인물은?', '상식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '갈릴레오 갈릴레이', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '뉴턴', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '아인슈타인', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '퀴리', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('세계에서 면적이 가장 큰 나라는?', '상식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '러시아', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '캐나다', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '중국', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '미국', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('설탕의 주요 성분은?', '상식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '자당', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '포도당', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '과당', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '젖당', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('백신의 주된 목적은?', '상식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '면역 형성', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '통증 억제', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '영양 보충', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '염증 제거', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('세계 4대 문명에 포함되지 않는 것은?', '상식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '마야 문명', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '메소포타미아 문명', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '이집트 문명', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '황하 문명', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('전구를 상용화한 발명가는?', '상식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '에디슨', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '테슬라', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '벨', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '파스퇴르', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('지구 자전 주기는 약 얼마일까요?', '상식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '24시간', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '12시간', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '48시간', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '72시간', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('구글의 안드로이드 로고 색상 기본은?', '상식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '초록색', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '파란색', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '빨간색', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '보라색', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('피타고라스 정리는 직각삼각형의 무엇에 관한 정리인가요?', '상식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '변의 길이', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '각의 크기', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '넓이', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '둘레', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('대한민국에서 가장 높은 산은?', '상식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '한라산', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '지리산', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '설악산', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '태백산', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('커피에 카페인을 가장 먼저 분리한 인물은?', '상식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '룽게', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '파스퇴르', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '멘델', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '라부아지에', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('바다와 육지가 만나는 선을 무엇이라 하나요?', '상식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '해안선', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '수평선', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '적도선', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '경계선', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('한글 자음과 모음의 총 개수(현행 기준)는?', '상식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '24개', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '26개', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '28개', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '22개', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('대한민국의 통화 단위는?', '상식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '원', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '엔', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '달러', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '유로', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('1기압에서 얼음이 바로 수증기로 변하는 현상은?', '상식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '승화', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '응고', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '증발', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '응축', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('세계보건기구의 영문 약자는?', '상식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, 'WHO', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, 'WTO', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, 'WIPO', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, 'WMO', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('우리나라의 법정 도로 주행 방향은?', '상식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '우측통행', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '좌측통행', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '지역마다 다름', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '규정 없음', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('태양에서 방출되는 입자폭풍을 무엇이라 하나요?', '상식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '태양풍', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '오로라', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '제트기류', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '몬순', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('가장 작은 소수(Prime number)는?', '상식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '2', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '3', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '5', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('웹에서 HTTPS의 S는 무엇을 뜻하나요?', '상식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, 'Secure', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, 'Server', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, 'Static', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, 'Search', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('지구 온난화의 주된 원인 기체는?', '상식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '이산화탄소', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '질소', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '산소', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '수소', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('대한민국 인터넷 최상위 도메인은?', '상식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '.kr', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '.ko', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '.korea', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '.corea', FALSE);
+COMMIT;
+
+-- 술 퀴즈
+SET NAMES utf8mb4;
+START TRANSACTION;
 INSERT INTO quiz_question (question_text, category) VALUES ('맥주의 주 원료는 무엇일까요?', '술');
-SET @Q1 = LAST_INSERT_ID();
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-(@Q1, '보리', TRUE),
-(@Q1, '쌀', FALSE),
-(@Q1, '옥수수', FALSE),
-(@Q1, '감자', FALSE);
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '보리', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '쌀', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '옥수수', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '감자', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('와인의 주 원료는 무엇일까요?', '술');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '포도', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '보리', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '사과', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '고구마', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('사케(일본 청주)의 주 원료는?', '술');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '쌀', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '보리', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '옥수수', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '포도', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('위스키 숙성에 주로 사용되는 통은?', '술');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '오크통', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '스테인리스통', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '유리병', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '플라스틱통', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('진(Gin)의 대표 향료는?', '술');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '주니퍼베리', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '바닐라빈', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '코코아빈', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '후추', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('럼(Rum)의 주 원료는?', '술');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '사탕수수(당밀)', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '보리 맥아', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '포도', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '쌀', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('테킬라(Tequila)의 원료 식물은?', '술');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '아가베', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '선인장', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '올리브', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '대나무', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('보드카의 특징으로 맞는 것은?', '술');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '무색무취에 가깝다', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '진하게 달다', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '강한 훈연향', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '탄산이 있다', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('막걸리 발효에 쓰이는 전통 발효제는?', '술');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '누룩', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '효모만', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '요구르트', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '식초', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('IPA는 무엇의 약자일까요?', '술');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, 'India Pale Ale', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, 'International Pale Ale', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, 'Irish Porter Ale', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, 'Island Pilsner Ale', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('라거(Lager)는 어떤 방식의 발효를 하나요?', '술');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '저온 하층 발효', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '고온 상층 발효', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '무산소 발효', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '자연발효만', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('에일(Ale)은 어떤 방식의 발효를 하나요?', '술');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '고온 상층 발효', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '저온 하층 발효', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '무산소 발효', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '자연발효만', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('스카치 위스키는 어느 나라의 위스키일까요?', '술');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '스코틀랜드', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '아일랜드', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '미국', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '일본', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('버번 위스키로 인정받으려면 옥수수 비율이 최소 몇 퍼센트인가요?', '술');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '51%', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '30%', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '60%', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '75%', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('코냑(Cognac)은 어떤 증류주의 한 종류인가요?', '술');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '브랜디', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '럼', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '보드카', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '진', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('하드 사이더(cider)의 기본 원료는?', '술');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '사과', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '배', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '포도', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '자두', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('맥주에 넣는 홉(Hop)의 주된 역할은?', '술');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '쓴맛과 향, 보존성 부여', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '색을 진하게', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '탄산 생성', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '알코올도수 상승', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('바이젠(Weizen)은 어떤 맥주인가요?', '술');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '밀맥주', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '보리 라거', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '흑맥주만', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '무알코올 맥주', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('스타우트(Stout)는 어떤 맥주 계열에 속하나요?', '술');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '에일 계열', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '라거 계열', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '사이더 계열', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '와인 계열', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('샴페인의 전통 제조법의 핵심은?', '술');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '병내 2차 발효', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '오크통 증류', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '냉동 여과', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '가열 살균', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('프로세코(Prosecco)는 어느 나라의 스파클링 와인인가요?', '술');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '이탈리아', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '프랑스', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '스페인', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '독일', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('카바(Cava)는 어느 나라의 스파클링 와인인가요?', '술');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '스페인', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '이탈리아', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '포르투갈', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '프랑스', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('모히토(Mojito)의 베이스 술은?', '술');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '럼', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '진', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '보드카', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '위스키', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('마가리타(Margarita)의 베이스 술은?', '술');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '테킬라', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '럼', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '보드카', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '진', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('블러디 메리(Bloody Mary)의 베이스 술은?', '술');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '보드카', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '위스키', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '진', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '럼', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('올드 패션드(Old Fashioned)의 베이스 술은?', '술');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '위스키', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '럼', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '보드카', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '테킬라', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('네그로니(Negroni)의 기본 베이스는?', '술');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '진', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '럼', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '보드카', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '위스키', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('아이리시 커피에 들어가는 증류주는?', '술');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '위스키', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '럼', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '보드카', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '사케', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('피나 콜라다(Piña Colada)의 베이스 술은?', '술');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '럼', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '진', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '보드카', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '테킬라', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('사케의 ''준마이(純米)'' 표시는 무엇을 뜻하나요?', '술');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '양조알코올 무첨가', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '쌀을 전혀 깎지 않음', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '스파클링 사케', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '오크 숙성', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('와인의 ''드라이''는 보통 무엇을 의미하나요?', '술');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '당도가 낮다', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '알코올이 약하다', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '신맛이 강하다', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '색이 옅다', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('리슬링(Riesling)은 무엇인가요?', '술');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '포도 품종', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '발효 효모', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '증류 기법', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '오크의 종류', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('포트 와인(Port)은 어떤 와인인가요?', '술');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '강화 와인', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '스파클링 와인', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '로제 와인', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '오렌지 와인', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('셰리(Sherry)는 어느 나라의 와인인가요?', '술');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '스페인', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '이탈리아', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '독일', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '미국', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('그라파(Grappa)는 무엇으로 만드는 증류주인가요?', '술');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '포도주 찌꺼기(포마스)', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '보리 맥아', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '사탕수수', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '감자', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('메즈칼(Mezcal)은 어느 식물 계열로 만드는가요?', '술');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '아가베', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '선인장', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '올리브', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '사과', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('보일러메이커(Boilermaker)는 어떤 조합의 칵테일인가요?', '술');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '맥주+위스키', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '맥주+진', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '사이다+럼', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '맥주+보드카', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('기네스(Guinness)는 어떤 스타일의 맥주로 유명한가요?', '술');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '스타우트', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '필스너', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '바이젠', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '페일에일', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('필스너(Pilsner)는 어떤 맥주 유형인가요?', '술');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '라거', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '에일', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '사워', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '과일맥주', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('고제(Gose)는 어떤 특징의 맥주인가요?', '술');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '약간 짠맛과 산미', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '강한 훈연향', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '고도수 배럴 에이징', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '무알코올', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('아이스바인(Icewine)은 어떤 과정을 거친 와인인가요?', '술');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '얼린 포도로 만든다', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '오크를 태워 향을 입힌다', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '증류 후 숙성한다', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '거품을 낸다', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('보르도(Bordeaux)는 어느 나라의 와인 산지인가요?', '술');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '프랑스', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '이탈리아', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '칠레', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '독일', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('말벡(Malbec)이 유명한 국가는?', '술');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '아르헨티나', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '호주', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '미국', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '남아공', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('일본의 전통 증류주 쇼추(焼酎)의 대표 원료 중 하나는?', '술');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '고구마', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '포도', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '사과', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '보리싹', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('한국 전통주인 약주는 어떤 술인가요?', '술');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '맑은 탁주(여과한 쌀술)', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '과일주', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '증류 소주', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '맥주', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('막걸리의 일반적인 알코올 도수는?', '술');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '약 6~8도', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '약 1~2도', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '약 15~20도', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '약 30도 이상', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('소주 잔 한 잔(기본 소주잔)의 용량은 대략?', '술');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '약 50ml', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '약 30ml', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '약 120ml', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '약 200ml', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('알코올 도수 0.5% 미만의 음료는 국내 기준으로?', '술');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '비알코올(무알코올)로 분류 가능', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '주류로 분류', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '양주로 분류', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '증류주로 분류', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('에비에이션(Aviation) 칵테일의 베이스는?', '술');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '진', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '보드카', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '럼', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '테킬라', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('사워(sour) 계열 칵테일의 공통 요소는?', '술');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '시트러스 주스와 설탕', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '우유와 초콜릿', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '맥주와 소금', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '차와 시나몬', FALSE);
+COMMIT;
 
-INSERT INTO quiz_question (question_text, category) VALUES ('조선왕조 실록을 편찬한 왕조는?', '역사');
-SET @Q2 = LAST_INSERT_ID();
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-(@Q2, '조선', TRUE),
-(@Q2, '고려', FALSE),
-(@Q2, '신라', FALSE),
-(@Q2, '백제', FALSE);
+--스포츠 퀴즈
+SET NAMES utf8mb4;
+START TRANSACTION;
+INSERT INTO quiz_question (question_text, category) VALUES ('축구에서 한 팀의 경기 중 필드 위 선수 수는?', '스포츠');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '11명', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '10명', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '12명', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '9명', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('농구에서 한 팀이 코트에 내보내는 선수 수는?', '스포츠');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '5명', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '6명', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '7명', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '4명', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('야구에서 수비 팀의 필드 인원은?', '스포츠');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '9명', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '8명', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '10명', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '11명', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('배구에서 한 팀의 코트 위 선수 수는?', '스포츠');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '6명', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '5명', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '7명', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '8명', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('테니스의 그랜드슬램이 아닌 것은?', '스포츠');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, 'ATP 마스터스 1000', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '호주오픈', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '프랑스오픈', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '윔블던', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('하계 올림픽은 몇 년마다 열리나요?', '스포츠');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '4년', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '2년', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '3년', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '5년', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('정식 마라톤 거리는?', '스포츠');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '42.195km', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '40km', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '50km', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '21.0975km', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('탁구 단식 한 게임의 승점은?', '스포츠');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '11점', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '15점', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '21점', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '9점', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('배드민턴 단식 한 게임의 승점은?', '스포츠');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '21점', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '11점', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '25점', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '15점', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('야구에서 홈런은 몇 루타로 기록되나요?', '스포츠');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '4루타', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '3루타', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '2루타', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1루타', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('현재 FIFA 월드컵 우승 트로피의 명칭은?', '스포츠');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, 'FIFA 월드컵 트로피', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '줄리메 컵', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '챔피언스 트로피', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '골든 볼', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('골프에서 파 3홀의 기준 타수는?', '스포츠');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '3타', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '4타', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '5타', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '2타', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('수영의 영법이 아닌 것은?', '스포츠');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '다이빙', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '자유형', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '배영', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '평영', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('농구에서 3점 라인 밖에서 성공한 슛의 점수는?', '스포츠');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '3점', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '2점', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1점', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '4점', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('테니스에서 득점 진행 순서는?', '스포츠');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '0-15-30-40', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '0-10-20-30', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '0-20-40-60', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1-2-3-4', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('야구에서 1루→2루→3루→홈을 돌아 득점하는 것을?', '스포츠');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '득점', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '세이브', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '세이프티번트', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '볼넷', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('배구에서 네트를 손으로 잡는 행위는?', '스포츠');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '반칙', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '정상 플레이', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '득점', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '타임아웃', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('높이뛰기에서 바를 넘어가는 대표 기술은?', '스포츠');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '배면뛰기', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '가위뛰기', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '허들뛰기', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '뒤돌아뛰기', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('테니스 코트 표면이 아닌 것은?', '스포츠');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '얼음', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '하드', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '클레이', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '잔디', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('야구에서 만루 홈런을 부르는 말은?', '스포츠');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '그랜드슬램', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '사이클링 히트', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '번트 히트', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '인필드 플라이', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('축구에서 페널티킥은 골문에서 몇 미터?', '스포츠');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '11m', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '9m', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '12m', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '13m', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('핸드볼에서 한 팀의 코트 위 인원은?', '스포츠');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '7명', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '6명', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '8명', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '9명', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('국제 농구(FIBA) 경기의 총 경기 시간은?', '스포츠');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '40분', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '48분', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '36분', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '32분', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('배구 랠리 포인트 한 세트 승점은?(마지막 세트 제외)', '스포츠');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '25점', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '21점', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '15점', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '30점', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('탁구 라켓 양면 색상 규정은?', '스포츠');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '한쪽 빨강, 한쪽 검정', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '양쪽 다 빨강', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '양쪽 다 검정', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '색상 제한 없음', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('골프에서 기준타보다 2타 적게 넣으면?', '스포츠');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '이글', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '버디', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '파', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '보기', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('골프에서 OB는 무엇의 약자?', '스포츠');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, 'Out of Bounds', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, 'Out of Break', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, 'Over Boundary', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, 'Open Bunker', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('스키 활강을 영어로 무엇이라 하나요?', '스포츠');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '다운힐(Downhill)', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '쇼트턴', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '카빙', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '스위치', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('올림픽 오륜은 몇 개의 고리인가요?', '스포츠');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '5개', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '4개', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '6개', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '7개', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('야구에서 사이클링 히트의 구성은?', '스포츠');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1·2·3루타+홈런', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '2·3루타+홈런', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1·3루타+홈런', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1·2루타+홈런', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('씨름 기술이 아닌 것은?', '스포츠');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '오사에코미', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '들배지기', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '안다리', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '앞무릎치기', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('유도에서 즉시 승리로 경기가 끝나는 득점은?', '스포츠');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '한판', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '절반', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '지도', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '경고', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('기계체조 ''도마''의 영어 명칭은?', '스포츠');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, 'Vault', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, 'Beam', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, 'Bar', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, 'Ring', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('배구에서 같은 팀이 연속으로 공을 터치할 수 있는 최대 횟수는?', '스포츠');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '3회', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '2회', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '4회', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '무제한', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('빙상 종목이 아닌 것은?', '스포츠');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '서핑', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '스피드스케이팅', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '피겨스케이팅', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '쇼트트랙', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('수비가 골라인 밖으로 공을 내보냈을 때 재개 방법은?', '스포츠');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '코너킥', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '골킥', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '드롭볼', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '자유킥', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('농구에서 자유투의 점수는?', '스포츠');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1점', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '2점', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '3점', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '상황에 따라 다름', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('테니스에서 40-40 상황을 무엇이라 하나요?', '스포츠');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '듀스', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '어드밴티지', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '세트포인트', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '브레이크포인트', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('수구에서 경기 중 한 팀의 물 위 선수 수는?', '스포츠');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '7명', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '6명', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '8명', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '9명', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('탁구 단식에서 서브는 몇 점마다 교대하나요?', '스포츠');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '2점', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1점', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '3점', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '5점', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('배구에서 로테이션은 어느 방향으로 하나요?', '스포츠');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '시계 방향', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '반시계 방향', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '상·하 방향', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '무작위', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('테니스에서 서브를 두 번 모두 실패하면?', '스포츠');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '더블 폴트', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '네트 플레이', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '에이스', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '드롭샷', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('육상 단거리에서 사용하는 출발 장치는?', '스포츠');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '스타팅 블록', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '허들', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '로드콘', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '배턴', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('야구에서 타자가 세 번 헛스윙하면?', '스포츠');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '삼진', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '볼넷', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '사구', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '안타', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('농구에서 드리블을 멈췄다가 다시 시작하는 반칙은?', '스포츠');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '더블 드리블', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '백코트', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '고altending', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '3초 룰', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('골프의 모래 구역을 무엇이라 하나요?', '스포츠');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '벙커', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '해저드', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '페어웨이', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '러프', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('축구에서 경기를 시작할 때의 재개 방식은?', '스포츠');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '킥오프', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '드롭볼', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '프리킥', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '골킥', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('테니스에서 상대의 서브를 받아 바로 득점하는 것을?', '스포츠');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '리턴 에이스', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '서비스 에이스', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '발리', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '스매시', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('피겨스케이팅 점프 종류가 아닌 것은?', '스포츠');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '킥플립', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '살코', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '토루프', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '루프', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('배드민턴에서 셔틀콕을 치는 도구는?', '스포츠');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '라켓', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '배트', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '클럽', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '스틱', FALSE);
+COMMIT;
 
-INSERT INTO quiz_question (question_text, category) VALUES ('축구에서 한 팀의 선수는 몇 명인가요?', '스포츠');
-SET @Q3 = LAST_INSERT_ID();
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-(@Q3, '11명', TRUE),
-(@Q3, '10명', FALSE),
-(@Q3, '12명', FALSE),
-(@Q3, '9명', FALSE);
+--역사 퀴즈
+SET NAMES utf8mb4;
+START TRANSACTION;
+INSERT INTO quiz_question (question_text, category) VALUES ('조선을 건국한 인물은 누구인가요?', '역사');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '이성계', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '이방원', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '정도전', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '세종', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('삼국 통일을 이룬 나라는?', '역사');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '신라', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '고구려', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '백제', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '가야', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('훈민정음을 창제한 왕은?', '역사');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '세종', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '세조', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '성종', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '태종', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('고조선을 건국한 인물로 전해지는 이는?', '역사');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '단군왕검', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '주몽', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '박혁거세', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '김수로', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('고려의 수도는 어디였나요?', '역사');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '개경', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '경주', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '한양', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '평양', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('조선의 수도는 주로 어디였나요?', '역사');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '한양', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '개경', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '경주', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '광주', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('임진왜란 때 명장으로 유명한 인물은?', '역사');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '이순신', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '권율', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '원균', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '유성룡', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('병자호란 때 조선을 침략한 나라는?', '역사');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '청', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '명', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '일본', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '러시아', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('강화도조약이 체결된 연도는?', '역사');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1876년', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1866년', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1894년', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1905년', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('갑오개혁이 시작된 연도는?', '역사');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1894년', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1876년', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1910년', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1884년', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('대한제국을 선포한 황제는?', '역사');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '고종', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '순종', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '헌종', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '철종', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('3·1운동이 일어난 해는?', '역사');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1919년', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1910년', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1926년', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1945년', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('대한민국 임시정부가 처음 수립된 도시는?', '역사');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '상하이', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '서울', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '블라디보스토크', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '하얼빈', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('대한민국 광복절은 몇 월 며칠인가요?', '역사');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '8월 15일', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '3월 1일', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '10월 1일', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '12월 25일', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('한국전쟁이 발발한 해는?', '역사');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1950년', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1948년', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1953년', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1960년', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('신라의 수도(서라벌)는 현재의 어느 도시인가요?', '역사');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '경주', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '대구', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '부산', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '전주', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('백제의 초기 수도는 어디였나요?', '역사');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '한성', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '웅진', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '사비', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '공주', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('장수왕이 천도한 고구려의 수도는?', '역사');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '평양', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '국내성', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '졸본', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '집안', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('고려가 건국된 해는?', '역사');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '918년', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '936년', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '993년', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1018년', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('조선이 건국된 해는?', '역사');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1392년', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1388년', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1400년', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1418년', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('세종 때 물시계 자격루 제작에 공헌한 인물은?', '역사');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '장영실', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '정도전', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '허준', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '정약용', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('훈민정음이 반포된 해는?', '역사');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1446년', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1443년', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1453년', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1418년', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('경복궁을 처음 지은 왕은?', '역사');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '태조', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '세종', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '성종', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '영조', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('고려의 과거제를 정비하고 노비안검법을 시행한 왕은?', '역사');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '광종', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '성종', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '현종', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '문종', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('조선에서 대동법을 처음 시행한 왕은?', '역사');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '광해군', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '숙종', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '영조', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '정조', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('조선에서 균역법을 시행한 왕은?', '역사');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '영조', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '정조', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '숙종', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '순조', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('탕평책을 본격적으로 추진한 왕은?', '역사');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '영조', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '정조', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '영창대군', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '태종', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('장용영을 설치하여 군제 개혁을 추진한 왕은?', '역사');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '정조', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '영조', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '숙종', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '순조', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('신해통공(금난전권 폐지)을 실시한 왕은?', '역사');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '정조', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '영조', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '고종', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '태종', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('동학농민운동이 일어난 해는?', '역사');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1894년', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1876년', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1905년', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1919년', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('을사늑약이 체결된 해는?', '역사');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1905년', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1907년', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1910년', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1895년', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('한일병합조약이 체결된 해는?', '역사');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1910년', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1905년', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1907년', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1919년', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('6·10 만세운동이 일어난 해는?', '역사');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1926년', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1919년', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1929년', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1931년', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('광주학생항일운동이 일어난 해는?', '역사');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1929년', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1926년', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1937년', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1945년', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('4·19 혁명이 일어난 해는?', '역사');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1960년', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1953년', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1961년', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1972년', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('5·16 군사정변이 일어난 해는?', '역사');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1961년', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1960년', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1972년', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1980년', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('7·4 남북공동성명이 발표된 해는?', '역사');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1972년', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1971년', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1975년', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1988년', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('서울 올림픽이 개최된 해는?', '역사');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1988년', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1986년', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1992년', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '2002년', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('IMF 외환위기 구제금융 협약을 체결한 해는?', '역사');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1997년', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1998년', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '1995년', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '2000년', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('우리나라 최초의 근대적 신문은?', '역사');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '한성순보', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '독립신문', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '매일신문', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '조선일보', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('독립신문을 창간한 인물은?', '역사');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '서재필', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '안창호', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '김구', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '윤치호', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('청산리 대첩을 지휘한 독립군 지휘관은?', '역사');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '김좌진', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '홍범도', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '지청천', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '이범석', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('하얼빈에서 이토 히로부미를 사살한 인물은?', '역사');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '안중근', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '윤봉길', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '이봉창', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '강우규', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('대한민국 임시정부 주석으로 활동한 인물은?', '역사');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '김구', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '안창호', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '신채호', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '김원봉', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('대한독립군을 이끌며 봉오동 전투를 승리로 이끈 인물은?', '역사');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '홍범도', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '김좌진', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '최진동', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '안중근', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('발해를 건국한 인물은?', '역사');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '대조영', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '대광현', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '문왕', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '고왕', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('발해와 신라가 공존하던 시기의 통칭은?', '역사');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '남북국 시대', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '후삼국 시대', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '삼국 시대', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '고대국가 시대', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('조선 후기 실학자로 ''목민심서''를 저술한 인물은?', '역사');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '정약용', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '박지원', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '유수원', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '홍대용', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('현존하는 세계 최고(最古)의 금속활자본으로 알려진 책은?', '역사');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '직지심체요절', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '훈민정음', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '난중일기', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '용비어천가', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('고려 말 왜구 격퇴에 공을 세운 장군은?', '역사');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '이성계', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '최영', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '정몽주', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '이방원', FALSE);
+COMMIT;
 
+--음식 퀴즈
+SET NAMES utf8mb4;
+START TRANSACTION;
 INSERT INTO quiz_question (question_text, category) VALUES ('김치의 주재료는 무엇인가요?', '음식');
-SET @Q4 = LAST_INSERT_ID();
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-(@Q4, '배추', TRUE),
-(@Q4, '무', FALSE),
-(@Q4, '오이', FALSE),
-(@Q4, '당근', FALSE);
-
-INSERT INTO quiz_question (question_text, category) VALUES ('한국의 수도는 어디인가요?', '상식');
-SET @Q5 = LAST_INSERT_ID();
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-(@Q5, '서울', TRUE),
-(@Q5, '부산', FALSE),
-(@Q5, '인천', FALSE),
-(@Q5, '대구', FALSE);
-
--- (선택) 기존 "노래" 카테고리를 "상식"으로 바꾸려면 다음 한 줄 실행
--- UPDATE quiz_question SET category='상식' WHERE category='노래';
-
--- ============ 술 카테고리 100문항 ============
-
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-001] 다음 중 실제 맥주 스타일은?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-001] 다음 중 실제 맥주 스타일은?'), 'IPA', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-001] 다음 중 실제 맥주 스타일은?'), '버블티 라거', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-001] 다음 중 실제 맥주 스타일은?'), '콜드브루 스타우트', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-001] 다음 중 실제 맥주 스타일은?'), '레모네이드 에일', FALSE);
-
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-002] 필스너(Pilsner)의 기원 국가는?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-002] 필스너(Pilsner)의 기원 국가는?'), '체코', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-002] 필스너(Pilsner)의 기원 국가는?'), '독일', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-002] 필스너(Pilsner)의 기원 국가는?'), '벨기에', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-002] 필스너(Pilsner)의 기원 국가는?'), '오스트리아', FALSE);
-
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-003] 스타우트의 짙은 색의 주된 이유는?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-003] 스타우트의 짙은 색의 주된 이유는?'), '강하게 볶은 맥아', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-003] 스타우트의 짙은 색의 주된 이유는?'), '포도 껍질', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-003] 스타우트의 짙은 색의 주된 이유는?'), '차 잎', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-003] 스타우트의 짙은 색의 주된 이유는?'), '초콜릿 파우더', FALSE);
-
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-004] 바이스비어(Weissbier)의 주 곡물 조합은?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-004] 바이스비어(Weissbier)의 주 곡물 조합은?'), '보리+밀', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-004] 바이스비어(Weissbier)의 주 곡물 조합은?'), '보리+호밀', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-004] 바이스비어(Weissbier)의 주 곡물 조합은?'), '보리만', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-004] 바이스비어(Weissbier)의 주 곡물 조합은?'), '쌀+옥수수', FALSE);
-
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-005] 라거(Lager)의 숙성 특징은?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-005] 라거(Lager)의 숙성 특징은?'), '저온 장기 숙성', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-005] 라거(Lager)의 숙성 특징은?'), '상온 단기 숙성', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-005] 라거(Lager)의 숙성 특징은?'), '고온 증류', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-005] 라거(Lager)의 숙성 특징은?'), '오크통 발효', FALSE);
-
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-006] 세종(Saison)의 기원 국가는?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-006] 세종(Saison)의 기원 국가는?'), '벨기에', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-006] 세종(Saison)의 기원 국가는?'), '영국', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-006] 세종(Saison)의 기원 국가는?'), '미국', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-006] 세종(Saison)의 기원 국가는?'), '네덜란드', FALSE);
-
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-007] 고제(Gose) 스타일의 대표 풍미는?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-007] 고제(Gose) 스타일의 대표 풍미는?'), '짭짤함과 산미', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-007] 고제(Gose) 스타일의 대표 풍미는?'), '강한 훈연향', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-007] 고제(Gose) 스타일의 대표 풍미는?'), '바닐라 단맛', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-007] 고제(Gose) 스타일의 대표 풍미는?'), '포도향', FALSE);
-
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-008] 임페리얼(Imperial)의 의미로 옳은 것은?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-008] 임페리얼(Imperial)의 의미로 옳은 것은?'), '도수/바디감이 높음', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-008] 임페리얼(Imperial)의 의미로 옳은 것은?'), '무알코올', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-008] 임페리얼(Imperial)의 의미로 옳은 것은?'), '필스너 계열', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-008] 임페리얼(Imperial)의 의미로 옳은 것은?'), '과일 첨가', FALSE);
-
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-009] IPA의 쓴맛을 주로 좌우하는 재료는?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-009] IPA의 쓴맛을 주로 좌우하는 재료는?'), '홉', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-009] IPA의 쓴맛을 주로 좌우하는 재료는?'), '효모', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-009] IPA의 쓴맛을 주로 좌우하는 재료는?'), '물', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-009] IPA의 쓴맛을 주로 좌우하는 재료는?'), '맥아', FALSE);
-
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-010] 드라이 호핑(Dry hopping)의 주 목적은?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-010] 드라이 호핑(Dry hopping)의 주 목적은?'), '향 강화', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-010] 드라이 호핑(Dry hopping)의 주 목적은?'), '도수 상승', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-010] 드라이 호핑(Dry hopping)의 주 목적은?'), '필터링', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-010] 드라이 호핑(Dry hopping)의 주 목적은?'), '산화 억제', FALSE);
-
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-011] SRM/EBU와 더 관련 있는 항목은?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-011] SRM/EBU와 더 관련 있는 항목은?'), '맥주 색/쓴맛 지표', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-011] SRM/EBU와 더 관련 있는 항목은?'), '알코올 도수', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-011] SRM/EBU와 더 관련 있는 항목은?'), '잔의 크기', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-011] SRM/EBU와 더 관련 있는 항목은?'), '가격', FALSE);
-
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-012] 페일에일의 ''페일''은 무엇을 뜻하나?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-012] 페일에일의 ''페일''은 무엇을 뜻하나?'), '밝은 색 맥아 사용', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-012] 페일에일의 ''페일''은 무엇을 뜻하나?'), '가벼운 바디', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-012] 페일에일의 ''페일''은 무엇을 뜻하나?'), '낮은 도수', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-012] 페일에일의 ''페일''은 무엇을 뜻하나?'), '무여과', FALSE);
-
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-013] 라들러(Radler)는 무엇을 섞은 맥주인가?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-013] 라들러(Radler)는 무엇을 섞은 맥주인가?'), '레몬 소다', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-013] 라들러(Radler)는 무엇을 섞은 맥주인가?'), '토닉워터', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-013] 라들러(Radler)는 무엇을 섞은 맥주인가?'), '콜라', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-013] 라들러(Radler)는 무엇을 섞은 맥주인가?'), '우롱차', FALSE);
-
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-014] 니트로 맥주의 크리미 헤드를 만드는 가스는?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-014] 니트로 맥주의 크리미 헤드를 만드는 가스는?'), '질소', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-014] 니트로 맥주의 크리미 헤드를 만드는 가스는?'), '수소', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-014] 니트로 맥주의 크리미 헤드를 만드는 가스는?'), '산소', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-014] 니트로 맥주의 크리미 헤드를 만드는 가스는?'), '아르곤', FALSE);
-
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-015] 트라피스트 맥주는 누가 만드는가?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-015] 트라피스트 맥주는 누가 만드는가?'), '수도원/수도자 관리', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-015] 트라피스트 맥주는 누가 만드는가?'), '왕실 양조장', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-015] 트라피스트 맥주는 누가 만드는가?'), '대학 연구소', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-015] 트라피스트 맥주는 누가 만드는가?'), '개인 홈브루만', FALSE);
-
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-016] 샴페인은 어떤 경우에만 사용 가능한 명칭인가?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-016] 샴페인은 어떤 경우에만 사용 가능한 명칭인가?'), '샹파뉴 지역 스파클링', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-016] 샴페인은 어떤 경우에만 사용 가능한 명칭인가?'), '모든 스파클링', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-016] 샴페인은 어떤 경우에만 사용 가능한 명칭인가?'), '스파클링 화이트만', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-016] 샴페인은 어떤 경우에만 사용 가능한 명칭인가?'), '병입 전 설탕 무첨가', FALSE);
-
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-017] 레드 와인의 색은 무엇에서 오나?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-017] 레드 와인의 색은 무엇에서 오나?'), '포도 껍질 안토시아닌', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-017] 레드 와인의 색은 무엇에서 오나?'), '씨의 탄닌', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-017] 레드 와인의 색은 무엇에서 오나?'), '과육의 엽록소', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-017] 레드 와인의 색은 무엇에서 오나?'), '줄기의 리그닌', FALSE);
-
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-018] 드라이(와인)의 의미는?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-018] 드라이(와인)의 의미는?'), '잔당이 적음', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-018] 드라이(와인)의 의미는?'), '도수 낮음', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-018] 드라이(와인)의 의미는?'), '숙성 짧음', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-018] 드라이(와인)의 의미는?'), '탄산 적음', FALSE);
-
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-019] 디캔팅의 주 목적은?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-019] 디캔팅의 주 목적은?'), '침전 분리/에어레이션', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-019] 디캔팅의 주 목적은?'), '온도 낮춤', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-019] 디캔팅의 주 목적은?'), '도수 낮춤', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-019] 디캔팅의 주 목적은?'), '산화 방지', FALSE);
-
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-020] 리슬링(Riesling)은 주로 어떤 와인에 쓰이나?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-020] 리슬링(Riesling)은 주로 어떤 와인에 쓰이나?'), '화이트', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-020] 리슬링(Riesling)은 주로 어떤 와인에 쓰이나?'), '레드', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-020] 리슬링(Riesling)은 주로 어떤 와인에 쓰이나?'), '로제', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-020] 리슬링(Riesling)은 주로 어떤 와인에 쓰이나?'), '주정강화', FALSE);
-
--- ... 중략: 21번부터 100번까지 동일한 패턴으로 이어집니다.
--- 아래 블록들은 100문항을 모두 포함합니다.
-
--- 21
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-021] 탄닌은 주로 어디에서 오는가?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-021] 탄닌은 주로 어디에서 오는가?'), '껍질/씨/줄기', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-021] 탄닌은 주로 어디에서 오는가?'), '오크 뚜껑', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-021] 탄닌은 주로 어디에서 오는가?'), '물 첨가', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-021] 탄닌은 주로 어디에서 오는가?'), '설탕 잔당', FALSE);
-
--- 22
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-022] 스파클링 와인의 기포를 만드는 가공은?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-022] 스파클링 와인의 기포를 만드는 가공은?'), '2차 발효 CO2', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-022] 스파클링 와인의 기포를 만드는 가공은?'), '질소 주입', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-022] 스파클링 와인의 기포를 만드는 가공은?'), '감압', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-022] 스파클링 와인의 기포를 만드는 가공은?'), '가열', FALSE);
-
--- 23
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-023] 로제 와인의 보편적 제조법은?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-023] 로제 와인의 보편적 제조법은?'), '짧은 껍질 접촉 후 제거', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-023] 로제 와인의 보편적 제조법은?'), '레드+화이트 혼합만', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-023] 로제 와인의 보편적 제조법은?'), '화이트에 캐러멜', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-023] 로제 와인의 보편적 제조법은?'), '씨를 볶음', FALSE);
-
--- 24
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-024] 카베르네 소비뇽의 일반적 풍미는?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-024] 카베르네 소비뇽의 일반적 풍미는?'), '검붉은 과실+탄닌', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-024] 카베르네 소비뇽의 일반적 풍미는?'), '강한 허브향만', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-024] 카베르네 소비뇽의 일반적 풍미는?'), '높은 산미만', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-024] 카베르네 소비뇽의 일반적 풍미는?'), '짙은 바닐라만', FALSE);
-
--- 25
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-025] 화이트 와인을 너무 낮은 온도에서 마시면?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-025] 화이트 와인을 너무 낮은 온도에서 마시면?'), '향미가 닫힘', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-025] 화이트 와인을 너무 낮은 온도에서 마시면?'), '산미가 사라짐', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-025] 화이트 와인을 너무 낮은 온도에서 마시면?'), '도수 상승', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-025] 화이트 와인을 너무 낮은 온도에서 마시면?'), '탄산 생성', FALSE);
-
--- 26
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-026] 말벡의 대표 산지는?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-026] 말벡의 대표 산지는?'), '아르헨티나', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-026] 말벡의 대표 산지는?'), '스페인', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-026] 말벡의 대표 산지는?'), '이탈리아', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-026] 말벡의 대표 산지는?'), '포르투갈', FALSE);
-
--- 27
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-027] 포트 와인은 어떤 와인인가?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-027] 포트 와인은 어떤 와인인가?'), '주정강화', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-027] 포트 와인은 어떤 와인인가?'), '아이스와인', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-027] 포트 와인은 어떤 와인인가?'), '내추럴', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-027] 포트 와인은 어떤 와인인가?'), '오렌지 와인', FALSE);
-
--- 28
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-028] 오키한 풍미는 주로 어디서?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-028] 오키한 풍미는 주로 어디서?'), '오크통 숙성', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-028] 오키한 풍미는 주로 어디서?'), '스테인리스 발효', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-028] 오키한 풍미는 주로 어디서?'), '병입 직후', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-028] 오키한 풍미는 주로 어디서?'), '고온 발효', FALSE);
-
--- 29
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-029] 테루아(terroir)가 의미하는 바는?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-029] 테루아(terroir)가 의미하는 바는?'), '재배 환경의 총합', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-029] 테루아(terroir)가 의미하는 바는?'), '와인 가격', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-029] 테루아(terroir)가 의미하는 바는?'), '병 모양', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-029] 테루아(terroir)가 의미하는 바는?'), '코르크 재질', FALSE);
-
--- 30
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-030] 코르크 테인트의 원인 물질로 유명한 것은?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-030] 코르크 테인트의 원인 물질로 유명한 것은?'), 'TCA', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-030] 코르크 테인트의 원인 물질로 유명한 것은?'), 'THC', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-030] 코르크 테인트의 원인 물질로 유명한 것은?'), 'BPA', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-030] 코르크 테인트의 원인 물질로 유명한 것은?'), 'PFOA', FALSE);
-
--- 31
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-031] 증류주의 도수를 나타내는 단위로 옳은 것은?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-031] 증류주의 도수를 나타내는 단위로 옳은 것은?'), 'ABV(%)', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-031] 증류주의 도수를 나타내는 단위로 옳은 것은?'), 'RPM', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-031] 증류주의 도수를 나타내는 단위로 옳은 것은?'), 'PSI', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-031] 증류주의 도수를 나타내는 단위로 옳은 것은?'), 'dB', FALSE);
-
--- 32
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-032] 보드카의 전통적 특성은?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-032] 보드카의 전통적 특성은?'), '중립적 향·맛', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-032] 보드카의 전통적 특성은?'), '강한 연기향', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-032] 보드카의 전통적 특성은?'), '단맛', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-032] 보드카의 전통적 특성은?'), '허브 비터', FALSE);
-
--- 33
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-033] 럼의 주 원료는?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-033] 럼의 주 원료는?'), '사탕수수/당밀', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-033] 럼의 주 원료는?'), '보리', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-033] 럼의 주 원료는?'), '포도', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-033] 럼의 주 원료는?'), '감자', FALSE);
-
--- 34
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-034] 진(Gin)의 핵심 식물 향신료는?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-034] 진(Gin)의 핵심 식물 향신료는?'), '주니퍼 베리', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-034] 진(Gin)의 핵심 식물 향신료는?'), '바닐라', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-034] 진(Gin)의 핵심 식물 향신료는?'), '코코아', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-034] 진(Gin)의 핵심 식물 향신료는?'), '홍차', FALSE);
-
--- 35
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-035] 테킬라의 원료 식물은?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-035] 테킬라의 원료 식물은?'), '청색 아가베', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-035] 테킬라의 원료 식물은?'), '선인장', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-035] 테킬라의 원료 식물은?'), '용설란 일반', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-035] 테킬라의 원료 식물은?'), '유카', FALSE);
-
--- 36
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-036] 브랜디는 무엇을 증류한 술인가?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-036] 브랜디는 무엇을 증류한 술인가?'), '와인', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-036] 브랜디는 무엇을 증류한 술인가?'), '맥주', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-036] 브랜디는 무엇을 증류한 술인가?'), '사이다', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-036] 브랜디는 무엇을 증류한 술인가?'), '청주', FALSE);
-
--- 37
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-037] 리큐르의 공통 특징은?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-037] 리큐르의 공통 특징은?'), '당분/향료 첨가', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-037] 리큐르의 공통 특징은?'), '무여과', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-037] 리큐르의 공통 특징은?'), '오크 숙성 의무', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-037] 리큐르의 공통 특징은?'), '발효 의무 없음', FALSE);
-
--- 38
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-038] 아마로(Amaro)는 어떤 분류인가?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-038] 아마로(Amaro)는 어떤 분류인가?'), '허브 비터 리큐르', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-038] 아마로(Amaro)는 어떤 분류인가?'), '과일 증류주', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-038] 아마로(Amaro)는 어떤 분류인가?'), '곡주', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-038] 아마로(Amaro)는 어떤 분류인가?'), '발포주', FALSE);
-
--- 39
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-039] 메스칼은 무엇의 범주인가?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-039] 메스칼은 무엇의 범주인가?'), '아가베 증류주', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-039] 메스칼은 무엇의 범주인가?'), '옥수수 맥주', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-039] 메스칼은 무엇의 범주인가?'), '포도 증류주', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-039] 메스칼은 무엇의 범주인가?'), '사과 과실주', FALSE);
-
--- 40
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-040] 페르넷(Fernet)의 맛 성향은?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-040] 페르넷(Fernet)의 맛 성향은?'), '진한 허브 비터', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-040] 페르넷(Fernet)의 맛 성향은?'), '강한 단맛', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-040] 페르넷(Fernet)의 맛 성향은?'), '훈연향 중심', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-040] 페르넷(Fernet)의 맛 성향은?'), '우유 풍미', FALSE);
-
--- 41
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-041] 캐스크 스트렝스 병입의 특징은?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-041] 캐스크 스트렝스 병입의 특징은?'), '가수 없이 높은 도수', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-041] 캐스크 스트렝스 병입의 특징은?'), '차갑게 여과', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-041] 캐스크 스트렝스 병입의 특징은?'), '달게 가미', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-041] 캐스크 스트렝스 병입의 특징은?'), '탄산 주입', FALSE);
-
--- 42
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-042] 콜드 필터링(차갑게 여과)의 목적은?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-042] 콜드 필터링(차갑게 여과)의 목적은?'), '혼탁 원인 제거', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-042] 콜드 필터링(차갑게 여과)의 목적은?'), '도수 상승', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-042] 콜드 필터링(차갑게 여과)의 목적은?'), '색 진하게', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-042] 콜드 필터링(차갑게 여과)의 목적은?'), '향 첨가', FALSE);
-
--- 43
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-043] 블렌디드 위스키란?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-043] 블렌디드 위스키란?'), '여러 증류소/원액 블렌딩', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-043] 블렌디드 위스키란?'), '단일 통', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-043] 블렌디드 위스키란?'), '단일 곡물', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-043] 블렌디드 위스키란?'), '단일 빈티지', FALSE);
-
--- 44
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-044] 피트 향은 어느 공정에서 발생?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-044] 피트 향은 어느 공정에서 발생?'), '맥아 건조 시 이탄 연소', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-044] 피트 향은 어느 공정에서 발생?'), '증류 시 오렌지 껍질', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-044] 피트 향은 어느 공정에서 발생?'), '당화 시 바닐라', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-044] 피트 향은 어느 공정에서 발생?'), '병입 시 오크칩', FALSE);
-
--- 45
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-045] 싱글 몰트의 ''싱글'' 의미는?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-045] 싱글 몰트의 ''싱글'' 의미는?'), '단일 증류소 생산', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-045] 싱글 몰트의 ''싱글'' 의미는?'), '단일 곡물만', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-045] 싱글 몰트의 ''싱글'' 의미는?'), '단일 통만', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-045] 싱글 몰트의 ''싱글'' 의미는?'), '단일 연도만', FALSE);
-
--- 46
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-046] 스카치 위스키 최소 숙성 규정은?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-046] 스카치 위스키 최소 숙성 규정은?'), '3년', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-046] 스카치 위스키 최소 숙성 규정은?'), '1년', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-046] 스카치 위스키 최소 숙성 규정은?'), '2년', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-046] 스카치 위스키 최소 숙성 규정은?'), '6개월', FALSE);
-
--- 47
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-047] 버번 위스키의 통 규정은?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-047] 버번 위스키의 통 규정은?'), '신 화이트오크 새통', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-047] 버번 위스키의 통 규정은?'), '중고 셰리통 허용', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-047] 버번 위스키의 통 규정은?'), '오크 아닌 통 가능', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-047] 버번 위스키의 통 규정은?'), '통 숙성 의무 없음', FALSE);
-
--- 48
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-048] 버번의 곡물 비중 요건은?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-048] 버번의 곡물 비중 요건은?'), '옥수수 51% 이상', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-048] 버번의 곡물 비중 요건은?'), '호밀 51% 이상', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-048] 버번의 곡물 비중 요건은?'), '보리 51% 이상', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-048] 버번의 곡물 비중 요건은?'), '밀 51% 이상', FALSE);
-
--- 49
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-049] 라이 위스키의 곡물 요건은?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-049] 라이 위스키의 곡물 요건은?'), '호밀 51% 이상', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-049] 라이 위스키의 곡물 요건은?'), '옥수수 51% 이상', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-049] 라이 위스키의 곡물 요건은?'), '보리 51% 이상', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-049] 라이 위스키의 곡물 요건은?'), '밀 51% 이상', FALSE);
-
--- 50
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-050] 캐스크 피니시는 무엇을 뜻하나?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-050] 캐스크 피니시는 무엇을 뜻하나?'), '마지막에 다른 통 추가 숙성', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-050] 캐스크 피니시는 무엇을 뜻하나?'), '통 없이 스테인리스', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-050] 캐스크 피니시는 무엇을 뜻하나?'), '병입 후 숙성', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-050] 캐스크 피니시는 무엇을 뜻하나?'), '오크칩 침지', FALSE);
-
--- 51
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-051] 표준잔(standard drink)의 개념은?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-051] 표준잔(standard drink)의 개념은?'), '순알코올 일정량 기준', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-051] 표준잔(standard drink)의 개념은?'), '잔 크기', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-051] 표준잔(standard drink)의 개념은?'), '가격', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-051] 표준잔(standard drink)의 개념은?'), '브랜드', FALSE);
-
--- 52
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-052] 숙취를 줄이는 데 비교적 도움이 되는 습관은?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-052] 숙취를 줄이는 데 비교적 도움이 되는 습관은?'), '물 섭취/속도 조절', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-052] 숙취를 줄이는 데 비교적 도움이 되는 습관은?'), '빈속 고도주', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-052] 숙취를 줄이는 데 비교적 도움이 되는 습관은?'), '당분 과다', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-052] 숙취를 줄이는 데 비교적 도움이 되는 습관은?'), '혼성주 빠른 섭취', FALSE);
-
--- 53
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-053] 술과 약물 동시 복용은?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-053] 술과 약물 동시 복용은?'), '상호작용 위험 큼', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-053] 술과 약물 동시 복용은?'), '안전함', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-053] 술과 약물 동시 복용은?'), '숙취 완화', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-053] 술과 약물 동시 복용은?'), '효과 무관', FALSE);
-
--- 54
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-054] 칵테일 셰이킹의 목적이 아닌 것은?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-054] 칵테일 셰이킹의 목적이 아닌 것은?'), '탄산 주입', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-054] 칵테일 셰이킹의 목적이 아닌 것은?'), '냉각/희석/공기혼입', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-054] 칵테일 셰이킹의 목적이 아닌 것은?'), '균질화', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-054] 칵테일 셰이킹의 목적이 아닌 것은?'), '향 분산', FALSE);
-
--- 55
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-055] 온더락이 와인에 일반적이지 않은 이유는?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-055] 온더락이 와인에 일반적이지 않은 이유는?'), '희석/향 저하', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-055] 온더락이 와인에 일반적이지 않은 이유는?'), '색 변함', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-055] 온더락이 와인에 일반적이지 않은 이유는?'), '탄산 유실', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-055] 온더락이 와인에 일반적이지 않은 이유는?'), '산도 급증', FALSE);
-
--- 56
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-056] 마가리타의 베이스는?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-056] 마가리타의 베이스는?'), '데킬라', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-056] 마가리타의 베이스는?'), '럼', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-056] 마가리타의 베이스는?'), '보드카', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-056] 마가리타의 베이스는?'), '진', FALSE);
-
--- 57
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-057] 모히또의 베이스는?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-057] 모히또의 베이스는?'), '럼', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-057] 모히또의 베이스는?'), '보드카', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-057] 모히또의 베이스는?'), '데킬라', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-057] 모히또의 베이스는?'), '위스키', FALSE);
-
--- 58
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-058] 네그로니의 베이스는?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-058] 네그로니의 베이스는?'), '진', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-058] 네그로니의 베이스는?'), '럼', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-058] 네그로니의 베이스는?'), '보드카', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-058] 네그로니의 베이스는?'), '데킬라', FALSE);
-
--- 59
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-059] 올드 패션드의 베이스는?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-059] 올드 패션드의 베이스는?'), '위스키', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-059] 올드 패션드의 베이스는?'), '보드카', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-059] 올드 패션드의 베이스는?'), '진', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-059] 올드 패션드의 베이스는?'), '럼', FALSE);
-
--- 60
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-060] 모스크바 뮬의 베이스는?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-060] 모스크바 뮬의 베이스는?'), '보드카', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-060] 모스크바 뮬의 베이스는?'), '진', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-060] 모스크바 뮬의 베이스는?'), '럼', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-060] 모스크바 뮬의 베이스는?'), '데킬라', FALSE);
-
--- 61
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-061] 다이키리의 베이스는?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-061] 다이키리의 베이스는?'), '럼', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-061] 다이키리의 베이스는?'), '진', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-061] 다이키리의 베이스는?'), '보드카', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-061] 다이키리의 베이스는?'), '위스키', FALSE);
-
--- 62
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-062] 피나 콜라다의 베이스는?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-062] 피나 콜라다의 베이스는?'), '럼', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-062] 피나 콜라다의 베이스는?'), '데킬라', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-062] 피나 콜라다의 베이스는?'), '보드카', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-062] 피나 콜라다의 베이스는?'), '진', FALSE);
-
--- 63
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-063] 블러디 메리의 베이스는?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-063] 블러디 메리의 베이스는?'), '보드카', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-063] 블러디 메리의 베이스는?'), '진', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-063] 블러디 메리의 베이스는?'), '럼', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-063] 블러디 메리의 베이스는?'), '데킬라', FALSE);
-
--- 64
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-064] 클래식 드라이 마티니의 베이스는?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-064] 클래식 드라이 마티니의 베이스는?'), '진', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-064] 클래식 드라이 마티니의 베이스는?'), '보드카', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-064] 클래식 드라이 마티니의 베이스는?'), '럼', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-064] 클래식 드라이 마티니의 베이스는?'), '데킬라', FALSE);
-
--- 65
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-065] 위스키 사워의 구성은?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-065] 위스키 사워의 구성은?'), '위스키+레몬+설탕', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-065] 위스키 사워의 구성은?'), '보드카+콜라', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-065] 위스키 사워의 구성은?'), '럼+민트+사이다', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-065] 위스키 사워의 구성은?'), '진+토닉', FALSE);
-
--- 66
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-066] 롱아일랜드 아이스티의 특징은?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-066] 롱아일랜드 아이스티의 특징은?'), '여러 스피리츠 혼합+콜라', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-066] 롱아일랜드 아이스티의 특징은?'), '홍차 사용', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-066] 롱아일랜드 아이스티의 특징은?'), '진만 사용', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-066] 롱아일랜드 아이스티의 특징은?'), '보드카만 사용', FALSE);
-
--- 67
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-067] 쿠바 리브레의 구성은?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-067] 쿠바 리브레의 구성은?'), '럼+라임+콜라', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-067] 쿠바 리브레의 구성은?'), '진+토닉', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-067] 쿠바 리브레의 구성은?'), '보드카+오렌지', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-067] 쿠바 리브레의 구성은?'), '데킬라+자몽', FALSE);
-
--- 68
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-068] 팔로마의 소프트드링크는?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-068] 팔로마의 소프트드링크는?'), '자몽 소다', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-068] 팔로마의 소프트드링크는?'), '콜라', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-068] 팔로마의 소프트드링크는?'), '진저에일', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-068] 팔로마의 소프트드링크는?'), '토닉워터', FALSE);
-
--- 69
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-069] 애플 마티니의 핵심 리큐르/시럽은?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-069] 애플 마티니의 핵심 리큐르/시럽은?'), '사과(애플) 리큐르', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-069] 애플 마티니의 핵심 리큐르/시럽은?'), '체리 브랜디', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-069] 애플 마티니의 핵심 리큐르/시럽은?'), '아마레토', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-069] 애플 마티니의 핵심 리큐르/시럽은?'), '페퍼민트', FALSE);
-
--- 70
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-070] 화이트 러시안의 구성은?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-070] 화이트 러시안의 구성은?'), '보드카+커피 리큐르+크림', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-070] 화이트 러시안의 구성은?'), '럼+코코넛+파인', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-070] 화이트 러시안의 구성은?'), '진+베르무트', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-070] 화이트 러시안의 구성은?'), '위스키+콜라', FALSE);
-
--- 71
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-071] 블랙 러시안에서 빠지는 것은?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-071] 블랙 러시안에서 빠지는 것은?'), '크림', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-071] 블랙 러시안에서 빠지는 것은?'), '보드카', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-071] 블랙 러시안에서 빠지는 것은?'), '커피 리큐르', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-071] 블랙 러시안에서 빠지는 것은?'), '얼음', FALSE);
-
--- 72
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-072] 사이드카의 베이스는?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-072] 사이드카의 베이스는?'), '브랜디', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-072] 사이드카의 베이스는?'), '럼', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-072] 사이드카의 베이스는?'), '보드카', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-072] 사이드카의 베이스는?'), '진', FALSE);
-
--- 73
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-073] 프렌치 75의 스파클링 주류는?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-073] 프렌치 75의 스파클링 주류는?'), '샴페인/스파클링 와인', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-073] 프렌치 75의 스파클링 주류는?'), '맥주', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-073] 프렌치 75의 스파클링 주류는?'), '사케', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-073] 프렌치 75의 스파클링 주류는?'), '소다수', FALSE);
-
--- 74
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-074] 아페롤 스프리츠의 베이스 리큐르는?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-074] 아페롤 스프리츠의 베이스 리큐르는?'), '아페롤', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-074] 아페롤 스프리츠의 베이스 리큐르는?'), '캄파리', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-074] 아페롤 스프리츠의 베이스 리큐르는?'), '베르무트 세코', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-074] 아페롤 스프리츠의 베이스 리큐르는?'), '트리플 섹', FALSE);
-
--- 75
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-075] 캄파리 소다의 쓴맛은 어디서?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-075] 캄파리 소다의 쓴맛은 어디서?'), '캄파리의 허브 비터', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-075] 캄파리 소다의 쓴맛은 어디서?'), '토닉의 키니네', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-075] 캄파리 소다의 쓴맛은 어디서?'), '레몬 껍질', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-075] 캄파리 소다의 쓴맛은 어디서?'), '생강', FALSE);
-
--- 76
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-076] 진 토닉의 핵심 쓴맛 성분은?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-076] 진 토닉의 핵심 쓴맛 성분은?'), '키니네', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-076] 진 토닉의 핵심 쓴맛 성분은?'), '카페인', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-076] 진 토닉의 핵심 쓴맛 성분은?'), '타닌', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-076] 진 토닉의 핵심 쓴맛 성분은?'), '리모넨', FALSE);
-
--- 77
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-077] 아이리시 커피의 술은?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-077] 아이리시 커피의 술은?'), '아이리시 위스키', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-077] 아이리시 커피의 술은?'), '보드카', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-077] 아이리시 커피의 술은?'), '럼', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-077] 아이리시 커피의 술은?'), '진', FALSE);
-
--- 78
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-078] 카이피리냐의 베이스는?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-078] 카이피리냐의 베이스는?'), '카샤사', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-078] 카이피리냐의 베이스는?'), '피스코', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-078] 카이피리냐의 베이스는?'), '메스칼', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-078] 카이피리냐의 베이스는?'), '그라파', FALSE);
-
--- 79
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-079] 미모사의 비알코올 재료는?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-079] 미모사의 비알코올 재료는?'), '오렌지 주스', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-079] 미모사의 비알코올 재료는?'), '토마토 주스', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-079] 미모사의 비알코올 재료는?'), '콜라', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-079] 미모사의 비알코올 재료는?'), '진저에일', FALSE);
-
--- 80
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-080] 샹그리아의 전통적 베이스는?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-080] 샹그리아의 전통적 베이스는?'), '레드 와인', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-080] 샹그리아의 전통적 베이스는?'), '맥주', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-080] 샹그리아의 전통적 베이스는?'), '사케', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-080] 샹그리아의 전통적 베이스는?'), '보드카', FALSE);
-
--- 81
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-081] 뉴욕 사워의 상층으로 자주 올리는 것은?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-081] 뉴욕 사워의 상층으로 자주 올리는 것은?'), '레드 와인 플로트', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-081] 뉴욕 사워의 상층으로 자주 올리는 것은?'), '오렌지 주스', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-081] 뉴욕 사워의 상층으로 자주 올리는 것은?'), '맥주', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-081] 뉴욕 사워의 상층으로 자주 올리는 것은?'), '사이다', FALSE);
-
--- 82
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-082] 골든 러시의 베이스는?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-082] 골든 러시의 베이스는?'), '버번 위스키', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-082] 골든 러시의 베이스는?'), '보드카', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-082] 골든 러시의 베이스는?'), '럼', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-082] 골든 러시의 베이스는?'), '진', FALSE);
-
--- 83
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-083] 모히또의 허브는?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-083] 모히또의 허브는?'), '민트', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-083] 모히또의 허브는?'), '바질', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-083] 모히또의 허브는?'), '로즈메리', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-083] 모히또의 허브는?'), '타임', FALSE);
-
--- 84
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-084] 막걸리의 기본 발효 원료는?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-084] 막걸리의 기본 발효 원료는?'), '쌀과 누룩', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-084] 막걸리의 기본 발효 원료는?'), '보리 맥아', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-084] 막걸리의 기본 발효 원료는?'), '포도', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-084] 막걸리의 기본 발효 원료는?'), '감자', FALSE);
-
--- 85
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-085] 동동주의 특징은?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-085] 동동주의 특징은?'), '뜬 밥알', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-085] 동동주의 특징은?'), '증류주', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-085] 동동주의 특징은?'), '오크 숙성', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-085] 동동주의 특징은?'), '무알코올', FALSE);
-
--- 86
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-086] 약주/청주의 공통 특징은?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-086] 약주/청주의 공통 특징은?'), '맑은 술(여과)', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-086] 약주/청주의 공통 특징은?'), '탄산 많음', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-086] 약주/청주의 공통 특징은?'), '증류주', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-086] 약주/청주의 공통 특징은?'), '산도 낮음', FALSE);
-
--- 87
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-087] 증류식 소주의 전통 원료로 흔한 것은?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-087] 증류식 소주의 전통 원료로 흔한 것은?'), '쌀/고구마/보리', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-087] 증류식 소주의 전통 원료로 흔한 것은?'), '사탕수수', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-087] 증류식 소주의 전통 원료로 흔한 것은?'), '사과', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-087] 증류식 소주의 전통 원료로 흔한 것은?'), '포도', FALSE);
-
--- 88
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-088] 탁주와 청주의 가장 큰 차이는?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-088] 탁주와 청주의 가장 큰 차이는?'), '여과 여부', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-088] 탁주와 청주의 가장 큰 차이는?'), '도수', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-088] 탁주와 청주의 가장 큰 차이는?'), '원료', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-088] 탁주와 청주의 가장 큰 차이는?'), '지역', FALSE);
-
--- 89
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-089] 막걸리 보관 권장 온도는?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-089] 막걸리 보관 권장 온도는?'), '냉장 보관', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-089] 막걸리 보관 권장 온도는?'), '실온 고온', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-089] 막걸리 보관 권장 온도는?'), '영하 보관', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-089] 막걸리 보관 권장 온도는?'), '직사광선', FALSE);
-
--- 90
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-090] 소주 잔 돌려마시기 위생 측면은?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-090] 소주 잔 돌려마시기 위생 측면은?'), '비권장', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-090] 소주 잔 돌려마시기 위생 측면은?'), '권장', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-090] 소주 잔 돌려마시기 위생 측면은?'), '상관없음', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-090] 소주 잔 돌려마시기 위생 측면은?'), '필수', FALSE);
-
--- 91
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-091] 국내 편의점 맥주 라벨의 도수 표기는?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-091] 국내 편의점 맥주 라벨의 도수 표기는?'), 'ABV %', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-091] 국내 편의점 맥주 라벨의 도수 표기는?'), 'Proof', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-091] 국내 편의점 맥주 라벨의 도수 표기는?'), 'SRM', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-091] 국내 편의점 맥주 라벨의 도수 표기는?'), 'IBU', FALSE);
-
--- 92
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-092] 하이볼이 의미하는 것은?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-092] 하이볼이 의미하는 것은?'), '위스키+탄산수 기반 롱드링크', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-092] 하이볼이 의미하는 것은?'), '보드카 샷', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-092] 하이볼이 의미하는 것은?'), '진+베르무트', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-092] 하이볼이 의미하는 것은?'), '와인 칵테일', FALSE);
-
--- 93
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-093] IBU는 무엇의 지표인가?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-093] IBU는 무엇의 지표인가?'), '쓴맛 강도', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-093] IBU는 무엇의 지표인가?'), '알코올 도수', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-093] IBU는 무엇의 지표인가?'), '당도', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-093] IBU는 무엇의 지표인가?'), '산도', FALSE);
-
--- 94
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-094] SRM은 무엇의 지표인가?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-094] SRM은 무엇의 지표인가?'), '맥주 색상', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-094] SRM은 무엇의 지표인가?'), '발효 속도', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-094] SRM은 무엇의 지표인가?'), '효모 수', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-094] SRM은 무엇의 지표인가?'), '가스 압력', FALSE);
-
--- 95
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-095] Proof 100은 ABV로 얼마인가? (미국식)', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-095] Proof 100은 ABV로 얼마인가? (미국식)'), '50%', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-095] Proof 100은 ABV로 얼마인가? (미국식)'), '40%', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-095] Proof 100은 ABV로 얼마인가? (미국식)'), '57.1%', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-095] Proof 100은 ABV로 얼마인가? (미국식)'), '30%', FALSE);
-
--- 96
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-096] 알코올은 일반적으로 어떤 순서로 체내 대사되는가?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-096] 알코올은 일반적으로 어떤 순서로 체내 대사되는가?'), '흡수→분포→대사→배설', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-096] 알코올은 일반적으로 어떤 순서로 체내 대사되는가?'), '대사→흡수→분포→배설', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-096] 알코올은 일반적으로 어떤 순서로 체내 대사되는가?'), '배설→흡수→대사→분포', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-096] 알코올은 일반적으로 어떤 순서로 체내 대사되는가?'), '분포→흡수→배설→대사', FALSE);
-
--- 97
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-097] 와인잔을 스템(다리) 잡는 주된 이유는?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-097] 와인잔을 스템(다리) 잡는 주된 이유는?'), '온도 전달 줄이기', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-097] 와인잔을 스템(다리) 잡는 주된 이유는?'), '향을 늘리기', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-097] 와인잔을 스템(다리) 잡는 주된 이유는?'), '무게 증가', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-097] 와인잔을 스템(다리) 잡는 주된 이유는?'), '색 짙게', FALSE);
-
--- 98
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-098] 온더락 얼음의 큰 장점은?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-098] 온더락 얼음의 큰 장점은?'), '천천히 녹아 희석 적음', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-098] 온더락 얼음의 큰 장점은?'), '향 강화', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-098] 온더락 얼음의 큰 장점은?'), '탄산 생성', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-098] 온더락 얼음의 큰 장점은?'), '도수 상승', FALSE);
-
--- 99
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-099] 드링크 메뉴에서 ''니트''의 의미는?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-099] 드링크 메뉴에서 ''니트''의 의미는?'), '얼음/물 없이 그대로', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-099] 드링크 메뉴에서 ''니트''의 의미는?'), '탄산수 함께', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-099] 드링크 메뉴에서 ''니트''의 의미는?'), '얼음 위에', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-099] 드링크 메뉴에서 ''니트''의 의미는?'), '물을 타서', FALSE);
-
--- 100
-INSERT INTO quiz_question (question_text, place_id, category) VALUES ('[술-100] 토닉워터의 쓴맛 성분은?', NULL, '술');
-INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES
-((SELECT id FROM quiz_question WHERE question_text='[술-100] 토닉워터의 쓴맛 성분은?'), '키니네', TRUE),
-((SELECT id FROM quiz_question WHERE question_text='[술-100] 토닉워터의 쓴맛 성분은?'), '카페인', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-100] 토닉워터의 쓴맛 성분은?'), '타닌', FALSE),
-((SELECT id FROM quiz_question WHERE question_text='[술-100] 토닉워터의 쓴맛 성분은?'), '벤조산', FALSE);
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '배추', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '상추', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '깻잎', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '가지', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('비빔밥의 대표 양념은?', '음식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '고추장', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '간장', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '된장', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '머스터드', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('된장의 주된 원료는?', '음식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '콩', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '쌀', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '보리', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '고구마', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('두부는 무엇으로 만드나요?', '음식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '콩', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '쌀', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '보리', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '감자', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('초밥의 밥에 사용하는 식초는 주로?', '음식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '쌀식초', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '사과식초', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '발사믹식초', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '포도식초', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('라멘 육수로 흔한 것이 아닌 것은?', '음식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '우유 육수', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '돈코츠', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '쇼유', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '시오', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('쌀로 만든 국수는?', '음식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '쌀국수', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '우동', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '소면', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '파스타', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('페스토의 핵심 재료는?', '음식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '바질', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '고수', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '파슬리', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '민트', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('티라미수에 들어가는 치즈는?', '음식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '마스카포네', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '리코타', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '크림치즈', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '파르미지아노', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('카프레제 샐러드의 기본 재료가 아닌 것은?', '음식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '오이', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '토마토', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '모짜렐라', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '바질', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('마르게리타 피자의 전통 토핑은?', '음식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '토마토·모짜렐라·바질', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '페퍼로니·올리브·옥수수', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '햄·파인애플·양파', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '버섯·베이컨·옥수수', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('라자냐의 면 모양은?', '음식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '넓고 평평한 판', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '긴 원통', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '짧은 나사', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '얇은 실', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('카레의 대표 향신료가 아닌 것은?', '음식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '바닐라', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '강황', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '커민', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '고수씨', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('가쓰오부시와 다시마로 우려낸 일본 육수는?', '음식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '다시', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '탕', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '포타주', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '스톡', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('프랑스식 맑은 국물을 뜻하는 말은?', '음식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '콩소메', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '비스크', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '차우더', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '가스파초', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('초콜릿의 주 원료는?', '음식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '카카오', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '커피', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '차', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '설탕', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('마카롱의 주요 구성 재료는?', '음식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '아몬드 가루', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '호두 가루', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '땅콩 가루', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '귀리가루', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('우유를 발효해 만든 한국식 음료는?', '음식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '막걸리', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '식혜', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '수정과', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '미수', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('빵을 부풀게 하는 이스트의 작용은?', '음식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '발효', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '응고', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '산화', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '증발', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('스테이크의 굽기 정도로 가장 낮은 것은?', '음식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '레어', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '미디엄', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '미디엄웰던', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '웰던', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('리소토의 주된 곡물은?', '음식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '쌀', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '보리', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '귀리', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '밀', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('파스타 ''알 덴테''는 어떤 상태?', '음식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '살짝 심이 남은', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '완전히 무른', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '딱딱한 생면', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '바삭하게 튀긴', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('바게트가 유래한 나라는?', '음식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '프랑스', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '이탈리아', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '독일', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '미국', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('케첩의 주된 원료는?', '음식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '토마토', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '사과', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '고추', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '호박', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('과카몰리의 핵심 재료는?', '음식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '아보카도', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '감자', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '완두콩', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '브로콜리', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('수시에서 생선을 뜻하는 말은?', '음식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '사시미', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '템푸라', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '야키토리', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '오코노미야키', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('한식의 기본 양념장 ''장''이 아닌 것은?', '음식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '머스터드', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '간장', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '된장', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '고추장', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('쌈장을 만들 때 주로 섞는 것은?', '음식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '된장과 고추장', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '간장과 식초', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '머스터드와 마요네즈', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '소금과 설탕', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('스시에서 밥은 일본어로 무엇이라 하나요?', '음식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '샤리', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '멘', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '고항', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '마이', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('와사비의 매운맛 성분은?', '음식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '이소티오시안산염', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '캡사이신', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '피페린', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '알리신', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('햄버거의 기원으로 유명한 나라는?', '음식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '미국', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '독일', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '영국', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '프랑스', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('크루아상의 레이어를 만들기 위해 사용하는 기술은?', '음식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '라미네이션', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '감자전분화', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '카라멜화', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '에멀전', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('수플레가 잘 부풀도록 하는 재료는?', '음식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '거품 낸 달걀흰자', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '베이킹소다', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '버터', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '젤라틴', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('된장찌개의 대표 재료가 아닌 것은?', '음식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '바나나', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '두부', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '애호박', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '감자', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('칼국수의 면은 주로 무엇으로 만들까요?', '음식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '밀가루', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '쌀가루', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '메밀가루', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '옥수수가루', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('평양냉면의 면은 주로 무엇으로 만드나요?', '음식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '메밀', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '밀', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '옥수수', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '쌀', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('비빔국수의 대표 고명은?', '음식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '오이 채', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '김자반', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '단무지', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '멸치', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('김밥의 속 재료가 아닌 것은?', '음식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '파르미지아노', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '단무지', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '시금치', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '계란지단', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('스테이크에 자주 쓰는 소스로 고기가 굽는 팬에 와인을 넣어 만드는 것은?', '음식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '팬 소스(드글라세)', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '타르타르', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '사테', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '페스토', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('된장과 간장을 만드는 전통 발효 재료는?', '음식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '메주', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '누룩', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '요거트', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '스테비아', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('치즈 ''파르미지아노 레지아노''는 어느 나라 산지인가요?', '음식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '이탈리아', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '스페인', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '프랑스', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '스위스', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('카르보나라의 전통 재료로 옳지 않은 것은?', '음식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '크림', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '판체타/관찰레', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '계란', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '파르미지아노', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('된장·고추장·간장을 묶어 부르는 말은?', '음식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '장류', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '절임류', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '조미류', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '유지류', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('설탕을 가열해 갈색 향을 내는 반응은?', '음식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '카라멜화', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '젤화', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '응고', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '중화', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('샤퀴테리(육가공 전채)와 함께 자주 곁들이는 절임은?', '음식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '피클', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '김치', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '장아찌', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '절임고추', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('디저트 와인을 뜻하는 말은?', '음식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '디저트 와인', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '포티파이드 와인', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '내추럴 와인', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '레드 와인', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('에스프레소 한 샷의 일반적인 추출량은?', '음식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '약 30ml', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '약 60ml', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '약 15ml', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '약 90ml', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('라떼 아트의 기본 우유 거품 상태는?', '음식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '마이크로폼', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '하드폼', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '드라이폼', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '폴폼', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('그리스 요거트는 일반 요거트와 비교해 무엇이 많은가요?', '음식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '단백질', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '지방', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '설탕', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '물', FALSE);
+INSERT INTO quiz_question (question_text, category) VALUES ('올리브유 중 가공을 최소화한 최고 등급은?', '음식');
+SET @qid := LAST_INSERT_ID();
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '엑스트라 버진', TRUE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '버진', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '라이트', FALSE);
+INSERT INTO quiz_question_option (question_id, option_text, is_correct) VALUES (@qid, '리파인드', FALSE);
+COMMIT;

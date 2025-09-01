@@ -2,17 +2,20 @@ package su.kdt.minigame.repository;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import su.kdt.minigame.domain.QuizQuestion;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface QuizQuestionRepo extends JpaRepository<QuizQuestion, Long> {
   @Query("SELECT q FROM QuizQuestion q WHERE (:category IS NULL OR q.category = :category)")
   List<QuizQuestion> findByCategory(@Param("category") String category);
 
+  @EntityGraph(attributePaths = "options")
   @Query("""
     SELECT q FROM QuizQuestion q
      WHERE (:placeId IS NULL OR q.placeId = :placeId)
@@ -30,4 +33,18 @@ public interface QuizQuestionRepo extends JpaRepository<QuizQuestion, Long> {
     ORDER BY TRIM(q.category) ASC
   """)
   List<String> findAllDistinctCategories();
+
+  @EntityGraph(attributePaths = "options")
+  @Query("SELECT q FROM QuizQuestion q WHERE q.id = :questionId")
+  Optional<QuizQuestion> findByIdWithOptions(@Param("questionId") Long questionId);
+
+  @EntityGraph(attributePaths = "options")
+  @Query("""
+    SELECT q FROM QuizQuestion q
+     WHERE (:placeId IS NULL OR q.placeId = :placeId)
+       AND (:category IS NULL OR q.category = :category)
+  """)
+  Page<QuizQuestion> searchWithOptions(@Param("placeId") Long placeId,
+                                       @Param("category") String category,
+                                       Pageable pageable);
 }

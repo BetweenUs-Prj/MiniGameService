@@ -1,10 +1,10 @@
--- 테이블: penalty
+-- 테이블: penalty  
 -- 목적: 모든 벌칙의 내용을 관리합니다. 사용자가 직접 생성하거나, 시스템이 기본으로 제공하는 벌칙을 모두 이 테이블에 저장합니다.
-CREATE TABLE penalty (
-    id          BIGINT PRIMARY KEY AUTO_INCREMENT,  -- 벌칙의 고유 식별자입니다.
-    description VARCHAR(255) NOT NULL,              -- 벌칙의 실제 내용입니다. (예: "커피 사기")
-    user_uid    VARCHAR(100),                       -- 벌칙을 생성한 사용자의 고유 ID입니다. 이 값이 NULL이면 모든 사용자가 볼 수 있는 '기본 벌칙'임을 의미합니다.
-    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- 벌칙이 생성된 시각입니다.
+CREATE TABLE IF NOT EXISTS penalty (
+    penalty_id BIGINT PRIMARY KEY AUTO_INCREMENT,   -- 벌칙의 고유 식별자입니다.
+    user_uid   VARCHAR(100) NOT NULL,               -- 벌칙을 생성한 사용자의 고유 ID입니다.
+    penalty_text VARCHAR(255) NOT NULL,             -- 벌칙의 실제 내용입니다. (예: "커피 사기")
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP  -- 벌칙이 생성된 시각입니다.
 );
 
 -- 테이블: game_session
@@ -20,19 +20,11 @@ CREATE TABLE game_session (
     selected_penalty_id BIGINT,                             -- 게임 시작 전에 방장이 선택한 벌칙의 ID입니다.
     penalty_description VARCHAR(255),                       -- [스냅샷] 게임 종료 시점의 벌칙 내용을 여기에 복사하여 저장합니다. 원본 벌칙이 수정되어도 과거 기록이 변하지 않도록 보존하는 중요한 역할을 합니다.
     total_rounds        INT DEFAULT 5, -- ◀◀◀ 퀴즈 문항 수 필드 추가 (기본값 5)
-    FOREIGN KEY (selected_penalty_id) REFERENCES penalty(id)
+    is_private         BOOLEAN DEFAULT FALSE,               -- 비공개방 여부
+    pin_hash           VARCHAR(255),                        -- 비공개방 PIN 해시값
+    FOREIGN KEY (selected_penalty_id) REFERENCES penalty(penalty_id)
 );
 
--- 테이블: reaction_result
--- 목적: 반응 속도 게임에서 각 사용자의 결과를 기록합니다.
-CREATE TABLE reaction_result (
-    id            BIGINT PRIMARY KEY AUTO_INCREMENT,  -- 결과 기록의 고유 식별자입니다.
-    session_id    BIGINT NOT NULL,                    -- 이 결과가 어떤 게임 세션에 속하는지를 나타냅니다.
-    user_uid      VARCHAR(100) NOT NULL,              -- 결과를 제출한 사용자의 ID입니다.
-    reaction_time DOUBLE NOT NULL,                    -- 사용자의 반응 속도(ms)입니다. 이 값이 가장 큰 사용자가 패배합니다.
-    ranking       INT,                                -- 게임 종료 후 결정된 순위입니다. (선택적 기능)
-    FOREIGN KEY (session_id) REFERENCES game_session(session_id)
-);
 
 -- 테이블: game_penalty
 -- 목적: 게임이 끝난 후, 최종적으로 결정된 패자와 그에게 할당된 벌칙을 기록하는 '결과표'입니다.
@@ -43,7 +35,7 @@ CREATE TABLE game_penalty (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,   -- 벌칙이 할당된 시각입니다.
     PRIMARY KEY (game_id, user_uid),                  -- 한 게임당 한 명의 패자만 존재하도록 보장합니다.
     FOREIGN KEY (game_id) REFERENCES game_session(session_id),
-    FOREIGN KEY (penalty_id) REFERENCES penalty(id)
+    FOREIGN KEY (penalty_id) REFERENCES penalty(penalty_id)
 );
 
 -- 테이블: quiz_question
@@ -86,5 +78,42 @@ CREATE TABLE quiz_answer (
     answer_time      TIMESTAMP,                          -- 답변을 제출한 시각입니다.
     is_correct       BOOLEAN,                            -- 제출된 답변의 정답 여부입니다.
     response_time_ms BIGINT,                             -- [규칙 핵심] 정답인 경우, 라운드 시작부터 정답 제출까지 걸린 시간(ms)입니다. 이 값의 총합이 가장 큰 사용자가 패배합니다.
-    FOREIGN KEY (round_id) REFERENCES quiz_round(round_id)
+    FOREIGN KEY (round_id) REFERENCES quiz_round(round_id),
+    CONSTRAINT uq_round_user UNIQUE (round_id, user_uid)  -- 중복 답변 방지
+);
+
+-- 테이블: game_session_member
+-- 목적: 게임 세션에 참여하는 멤버들을 관리합니다. 최대 10명까지 참여 가능하며, 각 멤버의 준비 상태를 추적합니다.
+CREATE TABLE game_session_member (
+    session_id  BIGINT NOT NULL,                        -- 게임 세션의 ID입니다.
+    user_uid    VARCHAR(100) NOT NULL,                  -- 참여하는 사용자의 고유 ID입니다.
+    is_ready    BOOLEAN DEFAULT FALSE,                  -- 사용자의 준비 상태입니다.
+    joined_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,    -- 세션에 참여한 시각입니다.
+    PRIMARY KEY (session_id, user_uid),                 -- 복합 기본키로 한 세션에 한 사용자는 한 번만 참여 가능합니다.
+    FOREIGN KEY (session_id) REFERENCES game_session(session_id)
+);
+
+-- 테이블: reaction_round
+-- 목적: 반응속도 게임의 라운드를 관리합니다. 각 라운드는 WAITING → READY → RED → FINISHED 상태로 진행됩니다.
+CREATE TABLE IF NOT EXISTS reaction_round (
+    round_id     BIGINT PRIMARY KEY AUTO_INCREMENT,     -- 라운드의 고유 식별자입니다.
+    session_id   BIGINT NOT NULL,                       -- 이 라운드가 속한 게임 세션의 ID입니다.
+    status       VARCHAR(20) NOT NULL DEFAULT 'WAITING',-- 라운드 상태 (WAITING, READY, RED, FINISHED)
+    red_at       TIMESTAMP NULL,                        -- 빨강 신호로 전환된 시각입니다.
+    created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,   -- 라운드가 생성된 시각입니다.
+    FOREIGN KEY (session_id) REFERENCES game_session(session_id)
+);
+
+-- 테이블: reaction_result
+-- 목적: 반응속도 게임에서 각 사용자의 클릭 결과를 기록합니다.
+DROP TABLE IF EXISTS reaction_result;
+CREATE TABLE reaction_result (
+    result_id    BIGINT PRIMARY KEY AUTO_INCREMENT,     -- 결과의 고유 식별자입니다.
+    round_id     BIGINT NOT NULL,                       -- 이 결과가 속한 라운드의 ID입니다.
+    user_uid     VARCHAR(100) NOT NULL,                 -- 결과를 제출한 사용자의 ID입니다.
+    clicked_at   TIMESTAMP NULL,                        -- 사용자가 클릭한 시각입니다.
+    delta_ms     INT NULL,                              -- 빨강 신호 이후 반응 시간(ms), false_start시 NULL
+    false_start  BOOLEAN NOT NULL DEFAULT FALSE,        -- 빨강 신호 전에 클릭했는지 여부
+    rank_order   INT NULL,                              -- 최종 순위 (1등, 2등, ...)
+    FOREIGN KEY (round_id) REFERENCES reaction_round(round_id)
 );

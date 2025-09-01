@@ -10,6 +10,12 @@ import java.util.List;
 public interface QuizQuestionOptionRepo extends JpaRepository<QuizQuestionOption, Long> {
     List<QuizQuestionOption> findByQuestion(QuizQuestion question);
     
-    @Query("SELECT o FROM QuizQuestionOption o WHERE o.question.id = :questionId")
-    List<QuizQuestionOption> findByQuestionId(@Param("questionId") Long questionId);
+    /**
+     * 특정 라운드의 질문에 특정 옵션이 속하는지 확인합니다.
+     */
+    @Query("SELECT COUNT(qo) > 0 FROM QuizQuestionOption qo " +
+           "JOIN qo.question q " +
+           "JOIN QuizRound r ON r.question.id = q.id " +
+           "WHERE r.roundId = :roundId AND qo.optionId = :optionId")
+    boolean existsByRoundIdAndOptionId(@Param("roundId") Long roundId, @Param("optionId") Long optionId);
 }

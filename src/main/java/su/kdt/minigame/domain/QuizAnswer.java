@@ -7,9 +7,10 @@ import lombok.NoArgsConstructor;
 import java.time.Instant;
 
 @Entity
-@Table(name = "quiz_answer")
+@Table(name = "quiz_answer", 
+       uniqueConstraints = @UniqueConstraint(columnNames = {"round_id", "user_uid"}))
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED) // Setter를 제거하고 JPA를 위한 생성자 추가
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class QuizAnswer {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,35 +21,64 @@ public class QuizAnswer {
     @JoinColumn(name = "round_id", nullable = false)
     private QuizRound round;
 
-    @Column(name = "user_uid", nullable = false) // MSA를 위해 'user_id' -> 'user_uid' (String)으로 변경
+    @Column(name = "user_uid", nullable = false)
     private String userUid;
 
+    @Column(name = "choice_index", nullable = false)
+    private Integer choiceIndex;
+
     @Lob
-    @Column(name = "answer_text", nullable = false)
+    @Column(name = "answer_text")
     private String answerText;
 
-    @Column(name = "answer_time", nullable = false)
-    private Instant answerTime;
+    @Column(name = "submitted_at", nullable = false)
+    private Instant submittedAt;
 
     @Column(name = "is_correct")
     private Boolean isCorrect;
 
-    @Column(name = "response_time_ms") // 벌칙 계산을 위한 응답 시간 필드 추가
+    @Column(name = "score", columnDefinition = "INT DEFAULT 0")
+    private Integer score = 0;
+
+    @Column(name = "response_time_ms")
     private Long responseTimeMs;
 
-    // 서비스 로직에서 사용할 생성자
+    // 새로운 생성자 (choice_index 포함)
+    public QuizAnswer(QuizRound round, String userUid, Integer choiceIndex) {
+        this.round = round;
+        this.userUid = userUid;
+        this.choiceIndex = choiceIndex;
+        this.answerText = String.valueOf(choiceIndex); // 호환성을 위해 유지
+        this.submittedAt = Instant.now();
+    }
+
+    // Legacy constructor for backward compatibility  
     public QuizAnswer(QuizRound round, String userUid, String answerText) {
         this.round = round;
         this.userUid = userUid;
         this.answerText = answerText;
-        this.answerTime = Instant.now();
+        this.submittedAt = Instant.now();
+        try {
+            this.choiceIndex = Integer.parseInt(answerText);
+        } catch (NumberFormatException e) {
+            this.choiceIndex = 0;
+        }
     }
 
-    // 정답 여부와 응답 시간을 기록하는 메소드
+    // 점수 부여 메서드
+    public void grade(boolean isCorrect, int score) {
+        this.isCorrect = isCorrect;
+        this.score = score;
+    }
+
+    // Legacy method for backward compatibility
     public void grade(boolean isCorrect, long responseTimeMs) {
         this.isCorrect = isCorrect;
-        if (isCorrect) {
-            this.responseTimeMs = responseTimeMs;
-        }
+        this.score = isCorrect ? 10 : 0;
+        this.responseTimeMs = responseTimeMs;
+    }
+
+    public Instant getAnswerTime() {
+        return this.submittedAt;
     }
 }

@@ -23,4 +23,8 @@ public class QuizQuestionOption {
 
     @Column(name = "is_correct", nullable = false)
     private Boolean isCorrect;
+
+    public boolean isCorrect() {
+        return Boolean.TRUE.equals(isCorrect);
+    }
 }

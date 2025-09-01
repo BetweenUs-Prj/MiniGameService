@@ -1,10 +1,13 @@
 package su.kdt.minigame.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 import su.kdt.minigame.domain.Penalty;
 import su.kdt.minigame.repository.PenaltyRepository;
+
 
 import java.util.List;
 
@@ -13,6 +16,22 @@ import java.util.List;
 public class PenaltyService {
 
     private final PenaltyRepository penaltyRepository;
+
+    /**
+     * 요구사항에 맞는 벌칙 생성 메소드
+     */
+    @Transactional
+    public Penalty create(String uid, String text) {
+        if (text.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "벌칙 내용을 입력해주세요.");
+        }
+        // 선택사항: 중복 방지
+        // if (penaltyRepository.existsByUserUidAndText(uid, text)) {
+        //     throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 같은 벌칙이 있어요.");
+        // }
+        var p = new Penalty(text, uid);
+        return penaltyRepository.save(p);
+    }
 
     /**
      * 특정 사용자가 볼 수 있는 모든 벌칙 목록을 조회합니다.
@@ -42,7 +61,19 @@ public class PenaltyService {
     public Long createPenalty(String description, String userUid, boolean returnId) {
         Penalty penalty = new Penalty(description, userUid);
         penalty = penaltyRepository.save(penalty);
-        return penalty.getId();
+        return penalty.getPenaltyId();
+    }
+
+    /**
+     * 사용자가 새로운 벌칙을 생성하고 생성된 엔티티를 반환합니다.
+     */
+    @Transactional
+    public Penalty createPenaltyAndReturn(String description, String userUid) {
+        if (description == null || description.trim().isEmpty()) {
+            throw new IllegalArgumentException("벌칙 내용을 입력해주세요.");
+        }
+        Penalty penalty = new Penalty(description, userUid);
+        return penaltyRepository.save(penalty);
     }
 
     /**
@@ -58,7 +89,7 @@ public class PenaltyService {
             throw new IllegalStateException("You can only update your own penalties");
         }
         
-        penalty.updateDescription(newDescription);
+        penalty.setText(newDescription);
     }
 
     /**
@@ -74,5 +105,13 @@ public class PenaltyService {
             throw new IllegalStateException("You can only delete your own penalties");
         }
         penaltyRepository.delete(penalty);
+    }
+
+    /**
+     * ID로 벌칙을 조회합니다.
+     */
+    @Transactional(readOnly = true)
+    public Penalty getPenaltyById(Long penaltyId) {
+        return penaltyRepository.findById(penaltyId).orElse(null);
     }
 }

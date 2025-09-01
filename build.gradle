@@ -2,6 +2,7 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.4.0'
     id 'io.spring.dependency-management' version '1.1.6'
+    id 'eclipse'
 }
 
 group = 'com.minigame'
@@ -22,32 +23,26 @@ configurations {
 repositories { mavenCentral() }
 
 dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-    implementation 'org.springframework.boot:spring-boot-starter-security'
-    implementation 'org.springframework.boot:spring-boot-starter-validation'
-    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+  implementation 'org.springframework.boot:spring-boot-starter-web'
+  implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+  implementation 'org.springframework.boot:spring-boot-starter-security'
+  implementation 'org.springframework.boot:spring-boot-starter-validation'
+  implementation 'org.springframework.boot:spring-boot-starter-actuator'
+  implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+  implementation 'org.springframework.boot:spring-boot-starter-websocket'
 
-    // ★ H2는 로컬 개발 전용으로만
-    developmentOnly 'com.h2database:h2'
-    // 또는 testRuntimeOnly 'com.h2database:h2'
+  // ✅ MySQL 드라이버 (필수)
+  runtimeOnly 'com.mysql:mysql-connector-j'
 
-    // ★ 사용 DB 드라이버만 런타임 포함 (MySQL만 쓰면 이것만 남기기)
-    runtimeOnly 'com.mysql:mysql-connector-j'
-    // runtimeOnly 'org.postgresql:postgresql' // PostgreSQL 안 쓰면 제거
+  // ❌ H2 제거 (또는 테스트 전용으로 이동)
+  // runtimeOnly 'com.h2database:h2'
 
-    compileOnly 'org.projectlombok:lombok'
-    annotationProcessor 'org.projectlombok:lombok'
+  compileOnly 'org.projectlombok:lombok'
+  annotationProcessor 'org.projectlombok:lombok'
 
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testImplementation 'org.springframework.security:spring-security-test'
-
-    implementation 'io.jsonwebtoken:jjwt-api:0.12.3'
-    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.3'
-    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.3'
-
-    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
-    implementation 'org.springframework.boot:spring-boot-starter-websocket'
+  testImplementation 'org.springframework.boot:spring-boot-starter-test'
+  testImplementation 'org.springframework.security:spring-security-test'
 }
+
 
 tasks.named('test') { useJUnitPlatform() }

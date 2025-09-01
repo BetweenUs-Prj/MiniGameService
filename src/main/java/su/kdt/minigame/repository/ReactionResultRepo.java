@@ -1,26 +1,41 @@
 package su.kdt.minigame.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import su.kdt.minigame.domain.GameSession;
+import org.springframework.data.jpa.repository.Query;
 import su.kdt.minigame.domain.ReactionResult;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface ReactionResultRepo extends JpaRepository<ReactionResult, Long> {
-
-    // ===== 아래 두 메소드를 추가해주세요! =====
-
+    
+    // Session-based methods removed as entity now uses round-based structure
+    
     /**
-     * 특정 게임 세션에 속한 모든 결과를 조회합니다.
-     * @param session 조회할 게임 세션
-     * @return 결과 목록
+     * 라운드별 성능순 정렬
      */
-    List<ReactionResult> findBySession(GameSession session);
-
+    @Query("SELECT r FROM ReactionResult r WHERE r.roundId = :roundId ORDER BY CASE WHEN r.falseStart = true THEN 1 ELSE 0 END, r.deltaMs ASC, r.userUid ASC")
+    List<ReactionResult> findByRoundIdOrderByPerformance(Long roundId);
+    
     /**
-     * 특정 게임 세션에 속한 모든 결과를 reactionTime 오름차순(빠른 순)으로 정렬하여 조회합니다.
-     * @param session 조회할 게임 세션
-     * @return 정렬된 결과 목록 (리더보드용)
+     * 라운드와 사용자별 결과 조회
      */
-    List<ReactionResult> findBySessionOrderByReactionTimeAsc(GameSession session);
+    Optional<ReactionResult> findByRoundIdAndUserUid(Long roundId, String userUid);
+    
+    /**
+     * 라운드별 참가자 존재 여부 확인
+     */
+    boolean existsByRoundIdAndUserUid(Long roundId, String userUid);
+    
+    /**
+     * 여러 라운드의 결과를 한번에 조회
+     */
+    List<ReactionResult> findByRoundIdIn(List<Long> roundIds);
+    
+    /**
+     * 라운드별 순위순 정렬
+     */
+    List<ReactionResult> findByRoundIdOrderByRankOrderAsc(Long roundId);
+    
+    // Note: Compatibility method name already matches above
 }
