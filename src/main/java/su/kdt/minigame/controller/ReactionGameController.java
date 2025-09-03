@@ -28,10 +28,12 @@ public class ReactionGameController {
     public ResponseEntity<Map<String, Object>> createRound(
             @RequestBody @Valid CreateRoundRequest request
     ) {
-        // 동시 시작 브로드캐스트 (5초 후 시작으로 변경하여 사용자가 페이지에 도착할 시간 확보)
-        reactionGameService.broadcastSimultaneousStart(request.sessionId(), 5000);
-        
+        // 먼저 라운드 생성
         ReactionRound round = reactionGameService.createRound(request.sessionId());
+        
+        // 동시 시작 브로드캐스트 (3-7초 랜덤 후 시작)
+        long randomDelay = 3000 + new java.util.Random().nextInt(4000); // 3000ms + 0-3999ms = 3-7초
+        reactionGameService.broadcastSimultaneousStart(request.sessionId(), round, randomDelay);
         
         Map<String, Object> response = Map.of(
             "roundId", round.getRoundId(),
@@ -49,6 +51,26 @@ public class ReactionGameController {
     ) {
         String userUid = (String) httpRequest.getAttribute(UidResolverFilter.ATTR_UID);
         ReactionResult result = reactionGameService.registerClick(roundId, userUid);
+        
+        Map<String, Object> response = Map.of(
+            "resultId", result.getResultId(),
+            "userUid", result.getUserUid(),
+            "clickedAt", result.getClickedAt() != null ? result.getClickedAt().toEpochMilli() : 0,
+            "deltaMs", result.getDeltaMs() != null ? result.getDeltaMs() : -1,
+            "falseStart", result.getFalseStart(),
+            "rank", result.getRankOrder() != null ? result.getRankOrder() : 0
+        );
+        
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/sessions/{sessionId}/click")
+    public ResponseEntity<Map<String, Object>> registerSessionClick(
+            @PathVariable Long sessionId,
+            HttpServletRequest httpRequest
+    ) {
+        String userUid = (String) httpRequest.getAttribute(UidResolverFilter.ATTR_UID);
+        ReactionResult result = reactionGameService.registerSessionClick(sessionId, userUid);
         
         Map<String, Object> response = Map.of(
             "resultId", result.getResultId(),
@@ -123,13 +145,18 @@ public class ReactionGameController {
 
     @GetMapping("/sessions/{sessionId}/results")
     public ResponseEntity<Map<String, Object>> getSessionResults(@PathVariable Long sessionId) {
+        log.info("[CONTROLLER] Getting session results for session: {}", sessionId);
         try {
             Map<String, Object> results = reactionGameService.getSessionResults(sessionId);
+            log.info("[CONTROLLER] Service returned {} result entries", results.size());
             if (results.isEmpty()) {
+                log.warn("[CONTROLLER] No results found for session {}, returning 204", sessionId);
                 return ResponseEntity.noContent().build();
             }
+            log.info("[CONTROLLER] Returning results for session {}", sessionId);
             return ResponseEntity.ok(results);
         } catch (Exception e) {
+            log.error("[CONTROLLER] Error getting results for session {}: {}", sessionId, e.getMessage(), e);
             return ResponseEntity.internalServerError().build();
         }
     }

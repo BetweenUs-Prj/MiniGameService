@@ -9,33 +9,28 @@ import java.util.Optional;
 
 public interface ReactionResultRepo extends JpaRepository<ReactionResult, Long> {
     
-    // Session-based methods removed as entity now uses round-based structure
+    // Session-based methods for single-game reaction games
+    @Query("SELECT r FROM ReactionResult r WHERE r.sessionId = :sessionId ORDER BY CASE WHEN r.falseStart = true THEN 1 ELSE 0 END, r.deltaMs ASC, r.userUid ASC")
+    List<ReactionResult> findBySessionIdOrderByPerformance(Long sessionId);
     
-    /**
-     * 라운드별 성능순 정렬
-     */
-    @Query("SELECT r FROM ReactionResult r WHERE r.roundId = :roundId ORDER BY CASE WHEN r.falseStart = true THEN 1 ELSE 0 END, r.deltaMs ASC, r.userUid ASC")
-    List<ReactionResult> findByRoundIdOrderByPerformance(Long roundId);
+    List<ReactionResult> findBySessionIdOrderByRankOrderAsc(Long sessionId);
     
-    /**
-     * 라운드와 사용자별 결과 조회
-     */
+    Optional<ReactionResult> findBySessionIdAndUserUid(Long sessionId, String userUid);
+    
+    List<ReactionResult> findBySessionId(Long sessionId);
+    
+    // Legacy round-based methods adapted to session-based storage
+    @Query("SELECT r FROM ReactionResult r WHERE r.sessionId = (SELECT rr.sessionId FROM ReactionRound rr WHERE rr.roundId = :roundId) AND r.userUid = :userUid")
     Optional<ReactionResult> findByRoundIdAndUserUid(Long roundId, String userUid);
     
-    /**
-     * 라운드별 참가자 존재 여부 확인
-     */
-    boolean existsByRoundIdAndUserUid(Long roundId, String userUid);
+    @Query("SELECT r FROM ReactionResult r WHERE r.sessionId = (SELECT rr.sessionId FROM ReactionRound rr WHERE rr.roundId = :roundId) ORDER BY CASE WHEN r.falseStart = true THEN 1 ELSE 0 END, r.deltaMs ASC, r.userUid ASC")
+    List<ReactionResult> findByRoundIdOrderByPerformance(Long roundId);
     
-    /**
-     * 여러 라운드의 결과를 한번에 조회
-     */
-    List<ReactionResult> findByRoundIdIn(List<Long> roundIds);
-    
-    /**
-     * 라운드별 순위순 정렬
-     */
+    @Query("SELECT r FROM ReactionResult r WHERE r.sessionId = (SELECT rr.sessionId FROM ReactionRound rr WHERE rr.roundId = :roundId) ORDER BY r.rankOrder ASC")
     List<ReactionResult> findByRoundIdOrderByRankOrderAsc(Long roundId);
+    
+    @Query("SELECT r FROM ReactionResult r WHERE r.sessionId IN (SELECT rr.sessionId FROM ReactionRound rr WHERE rr.roundId IN :roundIds)")
+    List<ReactionResult> findByRoundIdIn(List<Long> roundIds);
     
     // Note: Compatibility method name already matches above
 }

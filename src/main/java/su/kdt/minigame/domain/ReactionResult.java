@@ -20,8 +20,8 @@ public class ReactionResult {
     @Column(name = "result_id")
     private Long resultId;
 
-    @Column(name = "round_id", nullable = false)
-    private Long roundId;
+    @Column(name = "session_id", nullable = false)
+    private Long sessionId;
 
     @Column(name = "user_uid", nullable = false, length = 100)
     private String userUid;
@@ -38,8 +38,8 @@ public class ReactionResult {
     @Column(name = "false_start")
     private Boolean falseStart = false;
 
-    public ReactionResult(Long roundId, String userUid) {
-        this.roundId = roundId;
+    public ReactionResult(Long sessionId, String userUid) {
+        this.sessionId = sessionId;
         this.userUid = userUid;
         this.falseStart = false;
         this.deltaMs = null;
@@ -57,7 +57,7 @@ public class ReactionResult {
 
     // Compatibility methods and getters
     public Long getRoundId() {
-        return this.roundId;
+        return this.sessionId; // For backward compatibility
     }
 
     public Integer getDeltaMs() {
@@ -86,6 +86,6 @@ public class ReactionResult {
     
     // For backward compatibility with old session-based methods
     public Long getSessionId() {
-        return this.roundId; // Round ID is now the primary identifier
+        return this.sessionId;
     }
 }

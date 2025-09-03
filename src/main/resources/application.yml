@@ -37,6 +37,15 @@ spring:
       encoding: UTF-8
       continue-on-error: true
 
+  # Jackson 설정 (LocalDateTime 직렬화)
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    deserialization:
+      fail-on-unknown-properties: false
+    time-zone: UTC
+    date-format: yyyy-MM-dd'T'HH:mm:ss
+
 # Actuator 설정
 management:
   endpoints:

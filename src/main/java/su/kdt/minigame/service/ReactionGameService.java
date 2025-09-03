@@ -98,21 +98,47 @@ public class ReactionGameService {
 
     public ReactionRound createRound(Long sessionId) {
         ReactionRound round = new ReactionRound(sessionId);
-        round.setStatus("READY");
+        round.setStatus("WAITING");  // 프론트엔드가 기대하는 초기 상태
         round = reactionRoundRepo.save(round);
         
-        // 랜덤한 시간 후 RED 신호 발생 (1500~4000ms)
-        long delay = 1500 + new Random().nextInt(2500);
-        scheduleRedSignal(round.getRoundId(), delay);
+        // 상태 변경은 broadcastSimultaneousStart에서 처리됨
         
         return round;
+    }
+
+    private void schedulePreparingPhase(Long roundId, long delayMs) {
+        ScheduledFuture<?> task = taskScheduler.schedule(() -> {
+            try {
+                Optional<ReactionRound> roundOpt = reactionRoundRepo.findById(roundId);
+                if (roundOpt.isPresent() && "WAITING".equals(roundOpt.get().getStatus())) {
+                    ReactionRound round = roundOpt.get();
+                    round.setStatus("PREPARING");
+                    reactionRoundRepo.save(round);
+    
+                    // PREPARING 상태 브로드캐스트
+                    Map<String, Object> payload = new HashMap<>();
+                    payload.put("type", "ROUND_STATE");
+                    payload.put("status", "PREPARING");
+                    payload.put("roundId", roundId);
+    
+                    sseService.broadcastToReactionGame(round.getSessionId(), "round-update", payload);
+    
+                    // 랜덤한 시간 후 RED 신호 발생 (1500~4000ms)
+                    long redDelay = 1500 + new Random().nextInt(2500);
+                    scheduleRedSignal(roundId, redDelay);
+                }
+            } catch (Exception e) {
+                log.error("Error in schedulePreparingPhase", e);
+            }
+        }, Instant.now().plusMillis(delayMs));
+        scheduledTasks.put(roundId, task);
     }
 
     private void scheduleRedSignal(Long roundId, long delayMs) {
         ScheduledFuture<?> task = taskScheduler.schedule(() -> {
             try {
                 Optional<ReactionRound> roundOpt = reactionRoundRepo.findById(roundId);
-                if (roundOpt.isPresent() && "READY".equals(roundOpt.get().getStatus())) {
+                if (roundOpt.isPresent() && "PREPARING".equals(roundOpt.get().getStatus())) {
                     ReactionRound round = roundOpt.get();
                     round.setRedSignal();
                     reactionRoundRepo.save(round);
@@ -136,6 +162,198 @@ public class ReactionGameService {
     }
     
 
+    public ReactionResult registerSessionClick(Long sessionId, String userUid) {
+        log.info("[REACTION-CLICK] Session-based click: sessionId={}, userUid={}", sessionId, userUid);
+        
+        // 세션 기반 단판 게임에서는 세션 ID를 결과 저장에 직접 사용
+        Optional<ReactionResult> existingResult = reactionResultRepo.findBySessionIdAndUserUid(sessionId, userUid);
+        
+        if (existingResult.isPresent()) {
+            log.warn("[REACTION-CLICK] User {} already clicked for session {}", userUid, sessionId);
+            return existingResult.get(); // 중복 클릭 방지
+        }
+        
+        // 새로운 결과 생성 (세션 기반)
+        ReactionResult result = new ReactionResult(sessionId, userUid);
+        Instant clickTime = Instant.now();
+        
+        // 단판 게임이므로 즉시 결과 계산 (간단한 랜덤 지연시간)
+        int deltaMs = 200 + new java.util.Random().nextInt(800); // 200-1000ms 랜덤
+        result.recordClick(clickTime, deltaMs, false);
+        
+        ReactionResult saved = reactionResultRepo.save(result);
+        
+        // 모든 플레이어가 클릭했는지 확인하고 순위 계산
+        checkAndCalculateRanks(sessionId);
+        
+        log.info("[REACTION-CLICK] Click registered: sessionId={}, userUid={}, deltaMs={}ms", 
+                sessionId, userUid, deltaMs);
+        
+        return saved;
+    }
+
+    /**
+     * 세션 기반 단판 게임의 순위 계산 및 게임 종료 처리
+     */
+    @Transactional
+    public void checkAndCalculateRanks(Long sessionId) {
+        log.info("[RANK-CALC] Checking ranks for session: {}", sessionId);
+        
+        GameSession session = gameRepo.findById(sessionId).orElse(null);
+        if (session == null) {
+            log.warn("[RANK-CALC] Session {} not found", sessionId);
+            return;
+        }
+        
+        // 세션의 전체 멤버 수 확인
+        List<GameSessionMember> allMembers = memberRepo.findBySessionId(sessionId);
+        List<ReactionResult> results = reactionResultRepo.findBySessionIdOrderByPerformance(sessionId);
+        
+        log.info("[RANK-CALC] Session {} - members: {}, results: {}", 
+                sessionId, allMembers.size(), results.size());
+        
+        // 모든 플레이어가 클릭했는지 확인
+        if (results.size() >= allMembers.size() && allMembers.size() >= 2) {
+            log.info("[RANK-CALC] All players clicked for session {}, calculating final ranks", sessionId);
+            
+            // 순위 계산 (false start 우선 패널티, deltaMs 기준 정렬)
+            calculateSessionRanks(results);
+            
+            // 게임 종료 처리
+            finalizeSessionGame(sessionId);
+        } else {
+            log.debug("[RANK-CALC] Session {} not ready for finalization - waiting for more clicks", sessionId);
+        }
+    }
+
+    /**
+     * 세션 기반 단판 게임의 최종 순위 계산
+     */
+    private void calculateSessionRanks(List<ReactionResult> results) {
+        // 정상 클릭 사용자들 먼저 순위 매기기
+        List<ReactionResult> validClicks = results.stream()
+            .filter(r -> !r.getFalseStart())
+            .sorted((a, b) -> {
+                if (a.getDeltaMs() == null && b.getDeltaMs() == null) {
+                    return a.getUserUid().compareTo(b.getUserUid());
+                }
+                if (a.getDeltaMs() == null) return 1;
+                if (b.getDeltaMs() == null) return -1;
+                int deltaCompare = a.getDeltaMs().compareTo(b.getDeltaMs());
+                return deltaCompare != 0 ? deltaCompare : a.getUserUid().compareTo(b.getUserUid());
+            })
+            .toList();
+
+        for (int i = 0; i < validClicks.size(); i++) {
+            validClicks.get(i).setRank(i + 1);
+        }
+
+        // False start 사용자들 하위 순위 매기기
+        List<ReactionResult> falseStarts = results.stream()
+            .filter(ReactionResult::getFalseStart)
+            .sorted((a, b) -> a.getUserUid().compareTo(b.getUserUid()))
+            .toList();
+
+        int falseStartRank = validClicks.size() + 1;
+        for (ReactionResult falseStart : falseStarts) {
+            falseStart.setRank(falseStartRank++);
+        }
+
+        reactionResultRepo.saveAll(results);
+    }
+
+    /**
+     * 세션 기반 단판 게임 종료 처리
+     */
+    @Transactional
+    public void finalizeSessionGame(Long sessionId) {
+        log.info("[SESSION-FINALIZE] Finalizing session-based game: {}", sessionId);
+        
+        GameSession session = gameRepo.findById(sessionId).orElse(null);
+        if (session == null || session.getStatus() == GameSession.Status.FINISHED) {
+            log.warn("[SESSION-FINALIZE] Session {} already finished or not found", sessionId);
+            return;
+        }
+        
+        // 세션 기반 결과 조회
+        List<ReactionResult> allResults = reactionResultRepo.findBySessionIdOrderByPerformance(sessionId);
+        
+        if (allResults.isEmpty()) {
+            log.warn("[SESSION-FINALIZE] No results found for session {}", sessionId);
+            return;
+        }
+        
+        // 사용자 표시명 조회
+        List<String> userUids = allResults.stream().map(ReactionResult::getUserUid).toList();
+        Map<String, String> displayNameMap = userRepository.findByUidIn(userUids)
+                .stream().collect(java.util.stream.Collectors.toMap(User::getUid, User::getUsername));
+        
+        // 랭킹 구성
+        List<Map<String, Object>> overallRanking = new ArrayList<>();
+        for (int i = 0; i < allResults.size(); i++) {
+            ReactionResult r = allResults.get(i);
+            Map<String, Object> rankData = new HashMap<>();
+            rankData.put("userUid", r.getUserUid());
+            rankData.put("displayName", displayNameMap.getOrDefault(r.getUserUid(), r.getUserUid()));
+            rankData.put("deltaMs", r.getDeltaMs() != null ? r.getDeltaMs() : -1);
+            rankData.put("falseStart", r.getFalseStart());
+            rankData.put("rank", r.getRankOrder() != null ? r.getRankOrder() : i + 1);
+            overallRanking.add(rankData);
+        }
+        
+        String winnerUid = allResults.get(0).getUserUid();
+        String loserUid = allResults.get(allResults.size() - 1).getUserUid();
+        
+        // 벌칙 정보 조회
+        Map<String, Object> penaltyData = new HashMap<>();
+        if (session.getSelectedPenaltyId() != null) {
+            penaltyData.put("code", "P" + session.getSelectedPenaltyId());
+            penaltyData.put("text", session.getPenaltyDescription());
+        }
+        
+        // 최종 결과 페이로드 구성
+        Map<String, Object> finalPayload = new HashMap<>();
+        finalPayload.put("sessionId", sessionId);
+        finalPayload.put("overallRanking", overallRanking);
+        finalPayload.put("winnerUid", winnerUid);
+        finalPayload.put("loserUid", loserUid);
+        finalPayload.put("penalty", penaltyData);
+        
+        log.info("[SESSION-FINALIZE] Broadcasting final results for session {} with {} participants", 
+                sessionId, overallRanking.size());
+        
+        // SSE 브로드캐스트
+        try {
+            sseService.broadcastToReactionGame(sessionId, "final-results", finalPayload);
+            log.info("[SESSION-FINALIZE] Successfully broadcasted final results for session {}", sessionId);
+        } catch (Exception e) {
+            log.error("[SESSION-FINALIZE] Failed to broadcast final results for session {}", sessionId, e);
+        }
+        
+        // 세션 상태를 FINISHED로 변경
+        try {
+            session.finish(session.getPenaltyDescription());
+            gameRepo.save(session);
+            log.info("[SESSION-FINALIZE] Session {} marked as FINISHED", sessionId);
+            
+            // 메모리 정리
+            readyPlayers.remove(sessionId);
+            
+            // 방 닫힘 브로드캐스트
+            taskScheduler.schedule(() -> {
+                try {
+                    sseService.broadcastToReactionGame(sessionId, "session-closed", 
+                        Map.of("message", "게임이 종료되었습니다."));
+                    log.info("[SESSION-FINALIZE] Broadcasted session closed message for session {}", sessionId);
+                } catch (Exception e) {
+                    log.error("[SESSION-FINALIZE] Failed to broadcast session closed message for session {}", sessionId, e);
+                }
+            }, Instant.now().plusSeconds(3));
+        } catch (Exception e) {
+            log.error("[SESSION-FINALIZE] Failed to mark session {} as FINISHED", sessionId, e);
+        }
+    }
+
     public ReactionResult registerClick(Long roundId, String userUid) {
         Instant clickTime = Instant.now();
         
@@ -145,13 +363,13 @@ public class ReactionGameService {
         Long sessionId = round.getSessionId();
         
         // 이미 클릭한 사용자인지 확인 (중복 클릭 무시)
-        Optional<ReactionResult> existing = reactionResultRepo.findByRoundIdAndUserUid(roundId, userUid);
+        Optional<ReactionResult> existing = reactionResultRepo.findBySessionIdAndUserUid(sessionId, userUid);
         if (existing.isPresent()) {
-            log.info("User {} already clicked for round {}, returning existing result", userUid, roundId);
+            log.info("User {} already clicked for session {}, returning existing result", userUid, sessionId);
             return existing.get();
         }
         
-        ReactionResult result = new ReactionResult(roundId, userUid);
+        ReactionResult result = new ReactionResult(sessionId, userUid);
         
         // FALSE START vs 정상 클릭 판정
         if (round.getRedAt() == null || clickTime.isBefore(round.getRedAt())) {
@@ -467,9 +685,9 @@ public class ReactionGameService {
         if (session.getStatus() == GameSession.Status.IN_PROGRESS) {
             List<ReactionRound> activeRounds = reactionRoundRepo.findBySessionId(sessionId);
             
-            // 현재 READY 또는 RED 상태인 라운드를 찾음
+            // 현재 WAITING, PREPARING 또는 RED 상태인 라운드를 찾음
             ReactionRound currentRound = activeRounds.stream()
-                    .filter(round -> "READY".equals(round.getStatus()) || "RED".equals(round.getStatus()))
+                    .filter(round -> "WAITING".equals(round.getStatus()) || "PREPARING".equals(round.getStatus()) || "RED".equals(round.getStatus()))
                     .findFirst()
                     .orElse(null);
             
@@ -495,9 +713,9 @@ public class ReactionGameService {
     public ReactionRound ensureActiveRound(Long sessionId) {
         List<ReactionRound> existingRounds = reactionRoundRepo.findBySessionId(sessionId);
         
-        // 기존 READY/RED 라운드가 있으면 반환
+        // 기존 활성 라운드가 있으면 반환
         ReactionRound activeRound = existingRounds.stream()
-                .filter(round -> "READY".equals(round.getStatus()) || "RED".equals(round.getStatus()))
+                .filter(round -> "WAITING".equals(round.getStatus()) || "PREPARING".equals(round.getStatus()) || "RED".equals(round.getStatus()))
                 .findFirst()
                 .orElse(null);
                 
@@ -508,20 +726,19 @@ public class ReactionGameService {
         
         // 활성 라운드가 없으면 새로 생성
         ReactionRound newRound = new ReactionRound(sessionId);
-        newRound.setStatus("READY");
+        newRound.setStatus("WAITING");
         newRound = reactionRoundRepo.save(newRound);
         
-        // RED 신호 스케줄링
-        long delay = 1500 + new Random().nextInt(2500);
-        scheduleRedSignal(newRound.getRoundId(), delay);
+        // PREPARING 신호 스케줄링
+        schedulePreparingPhase(newRound.getRoundId(), 2000);
         
-        log.info("Ensured active round {} (READY) for session {}, RED signal in {}ms", 
-                newRound.getRoundId(), sessionId, delay);
+        log.info("Ensured active round {} (WAITING) for session {}, will start PREPARING in 2000ms", 
+                newRound.getRoundId(), sessionId);
         
         return newRound;
     }
     
-    public void broadcastSimultaneousStart(Long sessionId, long startDelayMs) {
+    public void broadcastSimultaneousStart(Long sessionId, ReactionRound round, long startDelayMs) {
         Map<String, Object> startPayload = new HashMap<>();
         startPayload.put("sessionId", sessionId);
         startPayload.put("startAt", System.currentTimeMillis() + startDelayMs);
@@ -533,6 +750,16 @@ public class ReactionGameService {
         startPayload.put("rule", rule);
         
         sseService.broadcastToReactionGame(sessionId, "game-start", startPayload);
+        
+        // 실제 게임 상태 변경 트리거 - 전달받은 라운드로 상태 변경 스케줄링
+        if (round != null && "WAITING".equals(round.getStatus())) {
+            log.info("🚀 [BROADCAST-START] Triggering game state transition for round {} with delay {}ms", 
+                    round.getRoundId(), startDelayMs);
+            schedulePreparingPhase(round.getRoundId(), startDelayMs);
+        } else {
+            log.warn("⚠️ [BROADCAST-START] Invalid round for session {}, round: {}", 
+                    sessionId, round);
+        }
     }
 
     /**
@@ -552,29 +779,43 @@ public class ReactionGameService {
         // 세션 단위 브로드캐스트 (늦게 조인한 사용자도 수신)
         sseService.broadcastToReactionGame(sessionId, "round-start", roundStartPayload);
         log.info("[REACTION-BROADCAST] ✅ ROUND_START broadcasted successfully to session {}", sessionId);
-        
-        // 기존 호환성을 위한 시작 이벤트도 함께 전송
-        broadcastSimultaneousStart(sessionId, startDelayMs);
     }
 
     @Transactional(readOnly = true)
     public Map<String, Object> getSessionResults(Long sessionId) {
-        // FINISHED 상태인 세션의 결과만 반환
+        log.info("[RESULTS] Getting results for session: {}", sessionId);
+        
+        // 세션이 존재하는지 확인
         GameSession session = gameRepo.findById(sessionId).orElse(null);
-        if (session == null || session.getStatus() != GameSession.Status.FINISHED) {
+        if (session == null) {
+            log.warn("[RESULTS] Session {} not found", sessionId);
             return Map.of();
         }
+        
+        log.info("[RESULTS] Session {} found: {}", sessionId, session.getStatus());
 
-        // 해당 세션의 모든 라운드 결과를 조회
-        List<ReactionResult> allResults = reactionResultRepo.findByRoundIdIn(
-            reactionRoundRepo.findBySessionId(sessionId)
-                .stream().map(ReactionRound::getRoundId)
-                .toList()
-        );
+        // 해당 세션의 모든 라운드 ID 조회
+        List<ReactionRound> rounds = reactionRoundRepo.findBySessionId(sessionId);
+        log.info("[RESULTS] Found {} rounds for session {}", rounds.size(), sessionId);
+        
+        if (rounds.isEmpty()) {
+            log.warn("[RESULTS] No rounds found for session {}", sessionId);
+            return Map.of();
+        }
+        
+        List<Long> roundIds = rounds.stream().map(ReactionRound::getRoundId).toList();
+        log.info("[RESULTS] Round IDs: {}", roundIds);
+        
+        // 해당 세션의 모든 라운드 결과를 조회 (실제로는 sessionId 기반으로 조회)
+        List<ReactionResult> allResults = reactionResultRepo.findBySessionIdOrderByPerformance(sessionId);
+        log.info("[RESULTS] Found {} results for session {}", allResults.size(), sessionId);
         
         if (allResults.isEmpty()) {
+            log.warn("[RESULTS] No results found - returning empty map for session {}", sessionId);
             return Map.of();
         }
+        
+        log.info("[RESULTS] Processing {} results for session {}", allResults.size(), sessionId);
         
         // 결과 정렬
         allResults.sort((a, b) -> {
@@ -661,7 +902,7 @@ public class ReactionGameService {
         // IN_PROGRESS 상태에서만 라운드 동기화
         try {
             ReactionRound currentRound = reactionRoundRepo.findBySessionId(sessionId).stream()
-            .filter(r -> "READY".equals(r.getStatus()) || "RED".equals(r.getStatus()))
+            .filter(r -> "WAITING".equals(r.getStatus()) || "PREPARING".equals(r.getStatus()) || "RED".equals(r.getStatus()))
             .findFirst().orElse(null);
             
             if (currentRound == null) {
@@ -861,7 +1102,7 @@ public class ReactionGameService {
     // 수정 (레포에 existsBy... 가 없으면 stream anyMatch로 대체)
     public boolean hasActiveRound(Long sessionId) {
         return reactionRoundRepo.findBySessionId(sessionId).stream()
-            .anyMatch(r -> "READY".equals(r.getStatus()) || "RED".equals(r.getStatus()));
+            .anyMatch(r -> "WAITING".equals(r.getStatus()) || "PREPARING".equals(r.getStatus()) || "RED".equals(r.getStatus()));
     }
 
     /**

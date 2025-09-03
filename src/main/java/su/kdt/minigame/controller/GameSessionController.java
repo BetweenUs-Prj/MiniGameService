@@ -63,6 +63,7 @@ public class GameSessionController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
+        log.info("[USAGE] listOpenSessions called - gameType: {}, status: {}, query: {}", gameType, status, q);
         return gameRepo.findOpenSessions(
                 gameType, status, q, PageRequest.of(page, size)
         );
@@ -76,6 +77,7 @@ public class GameSessionController {
             HttpServletRequest httpRequest,
             @RequestBody CreateSessionReq request
     ) {
+        log.info("[USAGE] createSession called - gameType: {}, category: {}", request.gameType(), request.category());
         String userUid = (String) httpRequest.getAttribute(UidResolverFilter.ATTR_UID);
         SessionResp response = gameSessionService.createSession(request, userUid);
         return ResponseEntity.created(URI.create("/api/mini-games/sessions/" + response.sessionId()))
@@ -99,6 +101,7 @@ public class GameSessionController {
             @PathVariable Long sessionId,
             HttpServletRequest httpRequest
     ) {
+        log.info("[USAGE] joinBySessionId called - sessionId: {}", sessionId);
         String userUid = (String) httpRequest.getAttribute(UidResolverFilter.ATTR_UID);
         try {
             // sessionId로 세션을 찾고 inviteCode를 가져와서 기존 로직 재사용
@@ -206,6 +209,7 @@ public class GameSessionController {
             @RequestBody Map<String, String> request,
             HttpServletRequest httpRequest
     ) {
+        log.info("[USAGE] joinByCode called - inviteCode: {}", request.get("inviteCode"));
         String userUid = (String) httpRequest.getAttribute(UidResolverFilter.ATTR_UID);
         String code = request.get("code");
         String pin = request.get("pin"); // PIN 파라미터 추가
