@@ -13,27 +13,26 @@ import java.util.Optional;
 public interface GameRepo extends JpaRepository<GameSession, Long> {
     List<GameSession> findByAppointmentId(Long appointmentId);
     
-    @Query("""
-        select new su.kdt.minigame.dto.OpenSessionSummary(
-          s.id,
-          CAST(s.id as string),
-          CAST(s.gameType as string),
-          s.category,
-          CAST(s.status as string),
-          10,
-          COUNT(m.sessionId),
-          s.hostUid,
-          null
-        )
-        from GameSession s
-        left join GameSessionMember m on m.sessionId = s.id
-        where (:gameType is null or CAST(s.gameType as string) = :gameType)
-          and (:status is null or CAST(s.status as string) = :status)
-          and s.status = 'WAITING'
-          and (:q is null or s.hostUid like %:q%)
-        group by s.id, s.gameType, s.status, s.hostUid
-        order by s.id desc
-        """)
+    @Query(value = """
+        SELECT 
+          s.id as sessionId,
+          CAST(s.id as CHAR) as code,
+          s.game_type as gameType,
+          s.category as category,
+          s.status as status,
+          10 as maxPlayers,
+          COALESCE(COUNT(m.session_id), 0) as memberCount,
+          s.host_uid as hostUid,
+          s.created_at as createdAt
+        FROM game_session s
+        LEFT JOIN game_session_member m ON m.session_id = s.id
+        WHERE (:gameType is null or s.game_type = :gameType)
+          AND (:status is null or s.status = :status)  
+          AND s.status = 'WAITING'
+          AND (:q is null or s.host_uid like concat('%', :q, '%'))
+        GROUP BY s.id, s.game_type, s.category, s.status, s.host_uid, s.created_at
+        ORDER BY s.id desc
+        """, nativeQuery = true)
     Page<OpenSessionSummary> findOpenSessions(
         @Param("gameType") String gameType,
         @Param("status") String status,

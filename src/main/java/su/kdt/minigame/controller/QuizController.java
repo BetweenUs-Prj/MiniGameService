@@ -71,15 +71,25 @@ public class QuizController {
             sessionId, roundId, request);
         try {
             // 우선순위: Header > Filter > Default
-            String userUid = headerUid;
-            if (userUid == null || userUid.isBlank()) {
-                userUid = (String) httpRequest.getAttribute(UidResolverFilter.ATTR_UID);
+            String userUidStr = headerUid;
+            if (userUidStr == null || userUidStr.isBlank()) {
+                userUidStr = (String) httpRequest.getAttribute(UidResolverFilter.ATTR_UID);
             }
             
-            if (userUid == null || userUid.isBlank()) {
+            if (userUidStr == null || userUidStr.isBlank()) {
                 log.warn("[ANS] Missing userUid: sessionId={}, roundId={}", sessionId, roundId);
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("code", "MISSING_USER_UID", "message", "사용자 식별자가 필요합니다."));
+            }
+            
+            // String을 Long으로 변환
+            Long userId;
+            try {
+                userId = Long.valueOf(userUidStr);
+            } catch (NumberFormatException e) {
+                log.warn("[ANS] Invalid userUid format: {}", userUidStr);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("code", "INVALID_USER_ID", "message", "사용자 ID 형식이 올바르지 않습니다."));
             }
             
             // 레거시 경로인 경우 sessionId를 round에서 추출
@@ -88,11 +98,11 @@ public class QuizController {
                 log.info("[ANS] Legacy path - extracted sessionId={} from roundId={}", sessionId, roundId);
             }
             
-            log.info("[ANS] Submit answer: sessionId={}, roundId={}, userUid={}, optionId={}", 
-                sessionId, roundId, userUid, request.optionId());
+            log.info("[ANS] Submit answer: sessionId={}, roundId={}, userId={}, optionId={}", 
+                sessionId, roundId, userId, request.optionId());
             
             // 🔥 새로운 멱등성 지원 서비스 호출 (responseTimeMs 포함)
-            AnswerResp response = quizService.submitAnswerIdempotent(sessionId, roundId, userUid, request.optionId(), request.responseTimeMs());
+            AnswerResp response = quizService.submitAnswerIdempotent(sessionId, roundId, userId, request.optionId(), request.responseTimeMs());
             return ResponseEntity.ok(response);
             
         } catch (su.kdt.minigame.exception.RoundGoneException e) {
@@ -356,6 +366,79 @@ public class QuizController {
     // ===================== 호환성 엔드포인트 =====================
     
     /**
+     * [BACKWARD COMPATIBILITY] Quiz round creation - old path support
+     * POST /api/mini-games/quiz/sessions/{sessionId}/rounds
+     * → Delegates to canonical API
+     */
+    @PostMapping("/quiz/sessions/{sessionId}/rounds")
+    public ResponseEntity<?> startRoundCompat(
+        @PathVariable Long sessionId,
+        @RequestBody(required = false) CreateRoundReq req
+    ) {
+        try {
+            log.info("[QUIZ-API-COMPAT] POST /quiz/sessions/{}/rounds - redirecting to canonical API", sessionId);
+            return startRound(sessionId, req);
+        } catch (Exception e) {
+            log.error("[QUIZ-API-COMPAT] Critical error in startRoundCompat: sessionId={}", sessionId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("code", "INTERNAL_ERROR", "message", "An unexpected error occurred"));
+        }
+    }
+
+    /**
+     * [BACKWARD COMPATIBILITY] Quiz answer submission - old path support
+     * POST /api/mini-games/quiz/sessions/{sessionId}/answers
+     * → Delegates to canonical API
+     */
+    @PostMapping("/quiz/sessions/{sessionId}/answers")
+    public ResponseEntity<?> submitAnswerSimpleCompat(
+            @PathVariable Long sessionId,
+            @RequestBody SubmitAnswerReq request,
+            HttpServletRequest httpRequest,
+            @RequestHeader(value = "X-USER-UID", required = false) String headerUid) {
+        try {
+            log.info("[QUIZ-API-COMPAT] POST /quiz/sessions/{}/answers - redirecting to canonical API", sessionId);
+            
+            // For this endpoint, we need to determine the roundId from the question
+            // Let's check the current active round for this session
+            Map<String, Object> currentRound = quizService.getCurrentRound(sessionId);
+            Long roundId;
+            
+            if (currentRound != null && currentRound.get("roundId") != null) {
+                roundId = (Long) currentRound.get("roundId");
+            } else {
+                // If no active round, reject the submission
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("code", "NO_ACTIVE_ROUND", "message", "현재 활성화된 라운드가 없습니다."));
+            }
+            
+            // Delegate to the main submission endpoint
+            return submitAnswerUnified(sessionId, roundId, request, httpRequest, headerUid);
+            
+        } catch (Exception e) {
+            log.error("[QUIZ-API-COMPAT] Critical error in submitAnswerSimpleCompat: sessionId={}", sessionId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("code", "INTERNAL_ERROR", "message", "An unexpected error occurred"));
+        }
+    }
+
+    /**
+     * [BACKWARD COMPATIBILITY] Quiz results - old path support
+     * GET /api/mini-games/quiz/sessions/{sessionId}/results
+     * → Delegates to canonical API
+     */
+    @GetMapping("/quiz/sessions/{sessionId}/results")
+    public ResponseEntity<GameResultsResp> getGameResultsCompat(@PathVariable Long sessionId) {
+        try {
+            log.info("[QUIZ-API-COMPAT] GET /quiz/sessions/{}/results - redirecting to canonical API", sessionId);
+            return getGameResults(sessionId);
+        } catch (Exception e) {
+            log.error("[QUIZ-API-COMPAT] Critical error in getGameResultsCompat: sessionId={}", sessionId, e);
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    /**
      * [BACKWARD COMPATIBILITY] 호환성을 위한 구 경로 지원
      * GET /api/mini-games/quiz/sessions/{sessionId}/current-round
      * → Canonical API로 위임
@@ -391,6 +474,41 @@ public class QuizController {
             // 500 에러 절대 금지 - 404로 응답
             return ResponseEntity.status(404)
                 .body(Map.of("code", "ROUND_NOT_FOUND", "message", "현재 진행 중인 라운드가 없습니다."));
+        }
+    }
+    
+    /**
+     * 게임 세션의 모든 라운드 조회 (새로운 방식)
+     * GET /api/mini-games/sessions/{sessionId}/all-rounds
+     */
+    @GetMapping("/sessions/{sessionId}/all-rounds")
+    public ResponseEntity<?> getAllRounds(@PathVariable Long sessionId) {
+        try {
+            log.info("[QUIZ-API] GET /sessions/{}/all-rounds - getting all pre-generated rounds", sessionId);
+            
+            // 세션 존재 여부 확인
+            if (!quizService.existsSession(sessionId)) {
+                log.warn("[QUIZ-API] Session not found: sessionId={}", sessionId);
+                return ResponseEntity.status(404)
+                    .body(Map.of("code", "SESSION_NOT_FOUND", "message", "세션을 찾을 수 없습니다."));
+            }
+            
+            List<RoundResp> allRounds = quizService.getAllRounds(sessionId);
+            log.info("[QUIZ-API] Found {} pre-generated rounds for session: {}", allRounds.size(), sessionId);
+            
+            Map<String, Object> response = Map.of(
+                "sessionId", sessionId,
+                "totalRounds", allRounds.size(),
+                "rounds", allRounds,
+                "serverTimeMs", java.time.Instant.now().toEpochMilli()
+            );
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("[QUIZ-API] Critical error in getAllRounds: sessionId={}", sessionId, e);
+            return ResponseEntity.status(500)
+                .body(Map.of("code", "INTERNAL_ERROR", "message", "라운드 조회 중 오류가 발생했습니다."));
         }
     }
 

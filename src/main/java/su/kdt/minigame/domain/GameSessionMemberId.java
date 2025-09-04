@@ -12,5 +12,5 @@ import java.io.Serializable;
 @EqualsAndHashCode
 public class GameSessionMemberId implements Serializable {
     private Long sessionId;
-    private String userUid;
+    private Long userId;
 }

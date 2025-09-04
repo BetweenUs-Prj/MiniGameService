@@ -8,7 +8,7 @@ import java.time.Instant;
 
 @Entity
 @Table(name = "quiz_answer", 
-       uniqueConstraints = @UniqueConstraint(columnNames = {"round_id", "user_uid"}))
+       uniqueConstraints = @UniqueConstraint(columnNames = {"round_id", "user_id"}))
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class QuizAnswer {
@@ -21,8 +21,8 @@ public class QuizAnswer {
     @JoinColumn(name = "round_id", nullable = false)
     private QuizRound round;
 
-    @Column(name = "user_uid", nullable = false)
-    private String userUid;
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
 
     @Column(name = "choice_index", nullable = false)
     private Integer choiceIndex;
@@ -44,18 +44,18 @@ public class QuizAnswer {
     private Long responseTimeMs;
 
     // 새로운 생성자 (choice_index 포함)
-    public QuizAnswer(QuizRound round, String userUid, Integer choiceIndex) {
+    public QuizAnswer(QuizRound round, Long userId, Integer choiceIndex) {
         this.round = round;
-        this.userUid = userUid;
+        this.userId = userId;
         this.choiceIndex = choiceIndex;
         this.answerText = String.valueOf(choiceIndex); // 호환성을 위해 유지
         this.submittedAt = Instant.now();
     }
 
     // Legacy constructor for backward compatibility  
-    public QuizAnswer(QuizRound round, String userUid, String answerText) {
+    public QuizAnswer(QuizRound round, Long userId, String answerText) {
         this.round = round;
-        this.userUid = userUid;
+        this.userId = userId;
         this.answerText = answerText;
         this.submittedAt = Instant.now();
         try {

@@ -49,8 +49,9 @@ public class ReactionGameController {
             @PathVariable Long roundId,
             HttpServletRequest httpRequest
     ) {
-        String userUid = (String) httpRequest.getAttribute(UidResolverFilter.ATTR_UID);
-        ReactionResult result = reactionGameService.registerClick(roundId, userUid);
+        String userUidStr = (String) httpRequest.getAttribute(UidResolverFilter.ATTR_UID);
+        Long userId = Long.valueOf(userUidStr);
+        ReactionResult result = reactionGameService.registerClick(roundId, userId);
         
         Map<String, Object> response = Map.of(
             "resultId", result.getResultId(),
@@ -69,8 +70,9 @@ public class ReactionGameController {
             @PathVariable Long sessionId,
             HttpServletRequest httpRequest
     ) {
-        String userUid = (String) httpRequest.getAttribute(UidResolverFilter.ATTR_UID);
-        ReactionResult result = reactionGameService.registerSessionClick(sessionId, userUid);
+        String userUidStr = (String) httpRequest.getAttribute(UidResolverFilter.ATTR_UID);
+        Long userId = Long.valueOf(userUidStr);
+        ReactionResult result = reactionGameService.registerSessionClick(sessionId, userId);
         
         Map<String, Object> response = Map.of(
             "resultId", result.getResultId(),
@@ -169,10 +171,11 @@ public class ReactionGameController {
             @PathVariable Long sessionId,
             HttpServletRequest httpRequest
     ) {
-        String userUid = (String) httpRequest.getAttribute(UidResolverFilter.ATTR_UID);
+        String userUidStr = (String) httpRequest.getAttribute(UidResolverFilter.ATTR_UID);
+        Long userId = Long.valueOf(userUidStr);
         
         try {
-            Map<String, Object> result = reactionGameService.markPlayerReady(sessionId, userUid, true);
+            Map<String, Object> result = reactionGameService.markPlayerReady(sessionId, userId, true);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -187,10 +190,11 @@ public class ReactionGameController {
             @PathVariable Long sessionId,
             HttpServletRequest httpRequest
     ) {
-        String userUid = (String) httpRequest.getAttribute(UidResolverFilter.ATTR_UID);
+        String userUidStr = (String) httpRequest.getAttribute(UidResolverFilter.ATTR_UID);
+        Long userId = Long.valueOf(userUidStr);
         
         try {
-            Map<String, Object> result = reactionGameService.markPlayerReady(sessionId, userUid, false);
+            Map<String, Object> result = reactionGameService.markPlayerReady(sessionId, userId, false);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -206,10 +210,11 @@ public class ReactionGameController {
             @PathVariable Long sessionId,
             HttpServletRequest httpRequest
     ) {
-        String userUid = (String) httpRequest.getAttribute(UidResolverFilter.ATTR_UID);
+        String userUidStr = (String) httpRequest.getAttribute(UidResolverFilter.ATTR_UID);
+        Long userId = Long.valueOf(userUidStr);
         
         try {
-            Map<String, Object> syncResult = reactionGameService.syncGameState(sessionId, userUid);
+            Map<String, Object> syncResult = reactionGameService.syncGameState(sessionId, userId);
             return ResponseEntity.ok(syncResult);
         } catch (Exception e) {
             // 에러 발생 시 기본 상태 반환 (500 에러 방지)

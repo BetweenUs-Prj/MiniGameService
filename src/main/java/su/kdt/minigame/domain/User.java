@@ -32,4 +32,8 @@ public class User {
 
     @Column(name = "prefer_criteria")
     private String preferCriteria; // 선호하는 거리산정 기준
+    
+    public Long getId() {
+        return this.kakaoId;
+    }
 }

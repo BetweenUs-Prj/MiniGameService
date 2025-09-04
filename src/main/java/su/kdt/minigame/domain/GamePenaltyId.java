@@ -14,10 +14,10 @@ import java.io.Serializable;
 public class GamePenaltyId implements Serializable {
 
     private Long gameId; // GameSession 참조
-    private String userUid; // User 참조 (String 타입)
+    private Long userId; // User 참조 (BIGINT 타입)
 
-    public GamePenaltyId(Long gameId, String userUid) {
+    public GamePenaltyId(Long gameId, Long userId) {
         this.gameId = gameId;
-        this.userUid = userUid;
+        this.userId = userId;
     }
 }

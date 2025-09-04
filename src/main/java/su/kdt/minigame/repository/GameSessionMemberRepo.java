@@ -22,7 +22,7 @@ public interface GameSessionMemberRepo extends JpaRepository<GameSessionMember, 
     @Query("SELECT gsm FROM GameSessionMember gsm WHERE gsm.sessionId = :sessionId ORDER BY gsm.joinedAt")
     List<GameSessionMember> findBySessionIdOrderByJoinedAt(@Param("sessionId") Long sessionId);
     
-    Optional<GameSessionMember> findBySessionIdAndUserUid(Long sessionId, String userUid);
+    Optional<GameSessionMember> findBySessionIdAndUserId(Long sessionId, Long userId);
     
     @Modifying
     @Transactional
@@ -31,8 +31,8 @@ public interface GameSessionMemberRepo extends JpaRepository<GameSessionMember, 
     
     @Modifying
     @Transactional
-    @Query("DELETE FROM GameSessionMember gsm WHERE gsm.sessionId = :sessionId AND gsm.userUid = :userUid")
-    void deleteBySessionIdAndUserUid(@Param("sessionId") Long sessionId, @Param("userUid") String userUid);
+    @Query("DELETE FROM GameSessionMember gsm WHERE gsm.sessionId = :sessionId AND gsm.userId = :userId")
+    void deleteBySessionIdAndUserId(@Param("sessionId") Long sessionId, @Param("userId") Long userId);
     
     @Query("SELECT gsm FROM GameSessionMember gsm WHERE gsm.sessionId = :sessionId")
     List<GameSessionMember> findBySessionId(@Param("sessionId") Long sessionId);

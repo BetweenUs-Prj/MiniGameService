@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class QuizService {
 
-    private record UserScore(String userUid, long correctAnswers, long totalTime) {}
+    private record UserScore(Long userId, long correctAnswers, long totalTime) {}
 
     private final GameRepo gameRepo;
     private final QuizRoundRepo roundRepo;
@@ -47,7 +47,7 @@ public class QuizService {
     private final su.kdt.minigame.util.PinUtil pinUtil;
 
     @Transactional
-    public SessionResp createQuizSession(CreateSessionReq req, String userUid, Penalty selectedPenalty) {
+    public SessionResp createQuizSession(CreateSessionReq req, Long userId, Penalty selectedPenalty) {
         final int DEFAULT_ROUNDS = 5;
         Integer totalRounds = (req.totalRounds() != null && req.totalRounds() > 0)
                 ? req.totalRounds()
@@ -58,7 +58,7 @@ public class QuizService {
                 ? req.category()
                 : "상식"; // 기본값은 상식
 
-        GameSession session = new GameSession(req.appointmentId(), GameSession.GameType.QUIZ, userUid, selectedPenalty.getPenaltyId(), selectedPenalty.getText(), totalRounds, category);
+        GameSession session = new GameSession(req.appointmentId(), GameSession.GameType.QUIZ, userId, selectedPenalty.getPenaltyId(), selectedPenalty.getText(), totalRounds, category);
         
         log.info("[SESSION] create id=will_be_generated, category={}, rounds={}", category, totalRounds);
         
@@ -75,7 +75,7 @@ public class QuizService {
         log.info("[SESSION] create id={}, category={}, rounds={}", savedSession.getId(), category, totalRounds);
         
         // Create host as first member of the session
-        GameSessionMember hostMember = new GameSessionMember(savedSession.getId(), userUid);
+        GameSessionMember hostMember = new GameSessionMember(savedSession.getId(), userId);
         memberRepo.save(hostMember);
         
         return SessionResp.from(savedSession);
@@ -147,8 +147,8 @@ public class QuizService {
 
     @Transactional
     public AnswerResp submitAnswer(Long roundId, SubmitAnswerReq req) {
-        log.info("[QUIZ] submitAnswer - roundId: {}, userUid: {}, answerText: {}", 
-            roundId, req.userUid(), req.answerText());
+        log.info("[QUIZ] submitAnswer - roundId: {}, userId: {}, answerText: {}", 
+            roundId, req.userId(), req.answerText());
         
         // [VALIDATION 1] Round exists
         QuizRound round = roundRepo.findById(roundId)
@@ -169,9 +169,9 @@ public class QuizService {
         }
         
         // [VALIDATION 4] Duplicate submission check
-        boolean existingAnswer = answerRepo.existsByRoundAndUserUid(round, req.userUid());
+        boolean existingAnswer = answerRepo.existsByRoundAndUserId(round, req.userId());
         if (existingAnswer) {
-            log.warn("[QUIZ] Duplicate submission - roundId: {}, userUid: {}", roundId, req.userUid());
+            log.warn("[QUIZ] Duplicate submission - roundId: {}, userId: {}", roundId, req.userId());
             throw new IllegalStateException("Answer already submitted - duplicate");
         }
 
@@ -179,7 +179,7 @@ public class QuizService {
                 .orElseThrow(() -> new NoSuchElementException("Session not found: " + round.getSessionId()));
 
         // [VALIDATION 5] Option ID validation (will throw IllegalArgumentException if invalid)
-        QuizAnswer answer = new QuizAnswer(round, req.userUid(), req.answerText());
+        QuizAnswer answer = new QuizAnswer(round, req.userId(), req.answerText());
 
         boolean correct = isCorrect(round.getQuestion(), req.answerText());
         
@@ -195,12 +195,12 @@ public class QuizService {
         
         // 🔥 [ANSWERS-AFTER] 구조화된 로그 추가
         log.info("[ANSWERS-AFTER] sid={}, rid={}, uid={}, isCorrect={}, rtMs={}, score={}, answerId={}", 
-            round.getSessionId(), roundId, req.userUid(), correct, 
+            round.getSessionId(), roundId, req.userId(), correct, 
             correct ? answer.getResponseTimeMs() : 0L, 
             correct ? 1 : 0, 
             answer.getId());
         
-        log.info("[QUIZ] Answer submitted - User: {}, Correct: {}, Round: {}", req.userUid(), correct, roundId);
+        log.info("[QUIZ] Answer submitted - User: {}, Correct: {}, Round: {}", req.userId(), correct, roundId);
 
         // 실제 세션 참여자 수를 가져옴 (온라인 상태인 멤버만 카운팅)
         List<GameSessionMember> activeMembers = memberRepo.findBySessionId(round.getSessionId());
@@ -208,7 +208,7 @@ public class QuizService {
         long answeredPlayers = answerRepo.countDistinctUserUidsByRound(round);
         
         log.info("[QUIZ] Round progress - Answered: {}/{}, Round: {}, Active members: {}", 
-                answeredPlayers, totalPlayers, roundId, activeMembers.stream().map(GameSessionMember::getUserUid).toList());
+                answeredPlayers, totalPlayers, roundId, activeMembers.stream().map(GameSessionMember::getUserId).toList());
         
         // 🔥 답변 후 afterCommit으로 점수판 업데이트 브로드캐스트 (트랜잭션 커밋 후 실행)
         log.info("[SCOREBOARD-PUB] sid={}, reason=ANSWER", round.getSessionId());
@@ -298,12 +298,12 @@ public class QuizService {
     private void assignQuizPenalty(GameSession session) {
         // 실제 세션 멤버들을 가져옴
         List<GameSessionMember> members = memberRepo.findBySessionId(session.getId());
-        List<String> userUids = members.stream()
-                .map(GameSessionMember::getUserUid)
+        List<Long> userIds = members.stream()
+                .map(GameSessionMember::getUserId)
                 .toList();
 
         List<UserScore> scores = new ArrayList<>();
-        for (String uid : userUids) {
+        for (Long uid : userIds) {
             Long correctCount = answerRepo.countCorrectAnswersByUser(session.getId(), uid);
             Long totalTime = answerRepo.findTotalCorrectResponseTimeByUser(session.getId(), uid);
             scores.add(new UserScore(
@@ -317,7 +317,7 @@ public class QuizService {
                 .comparing(UserScore::correctAnswers)
                 .thenComparing(UserScore::totalTime, Comparator.reverseOrder()));
 
-        String loserUid = scores.get(0).userUid();
+        Long loserUid = scores.get(0).userId();
 
         Long penaltyId = session.getSelectedPenaltyId();
         Penalty selectedPenalty = penaltyRepository.findById(penaltyId)
@@ -348,10 +348,10 @@ public class QuizService {
                     "penalty", Map.of(
                         "loserUid", loserUid,
                         "loserNickname", members.stream()
-                                .filter(m -> m.getUserUid().equals(loserUid))
+                                .filter(m -> m.getUserId().equals(loserUid))
                                 .findFirst()
                                 .map(GameSessionMember::getNickname)
-                                .orElse(loserUid.substring(0, Math.min(8, loserUid.length()))),
+                                .orElse(String.valueOf(loserUid).substring(0, Math.min(8, String.valueOf(loserUid).length()))),
                         "description", selectedPenalty.getDescription(),
                         "penaltyText", selectedPenalty.getDescription()
                     ),
@@ -530,11 +530,11 @@ public class QuizService {
             
             List<Map<String, Object>> scoreboard = members.stream()
                 .map(member -> {
-                    Long correctCount = answerRepo.countCorrectAnswersByUser(sessionId, member.getUserUid());
+                    Long correctCount = answerRepo.countCorrectAnswersByUser(sessionId, member.getUserId());
                     java.util.Map<String, Object> row = new java.util.HashMap<>();
-                    String displayName = member.getNickname() != null ? member.getNickname() : member.getUserUid().substring(0, Math.min(8, member.getUserUid().length()));
-                    row.put("userUid", member.getUserUid()); // 프론트엔드 호환성을 위해 userUid 사용
-                    row.put("uid", member.getUserUid()); // 기존 호환성 유지
+                    String displayName = member.getNickname() != null ? member.getNickname() : String.valueOf(member.getUserId()).substring(0, Math.min(8, String.valueOf(member.getUserId()).length()));
+                    row.put("userId", member.getUserId()); // 프론트엔드 호환성을 위해 userId 사용
+                    row.put("uid", member.getUserId()); // 기존 호환성 유지
                     row.put("nickname", displayName); // 실제 닉네임 사용
                     row.put("nick", displayName); // 기존 호환성 유지
                     row.put("displayName", displayName); // 결과 페이지 호환성
@@ -602,9 +602,9 @@ public class QuizService {
         for (int i = 0; i < sortedScores.size(); i++) {
             UserScore score = sortedScores.get(i);
             java.util.Map<String, Object> row = new java.util.HashMap<>();
-            row.put("userUid", score.userUid());
-            row.put("displayName", score.userUid().substring(0, Math.min(8, score.userUid().length())));
-            row.put("nickname", score.userUid().substring(0, Math.min(8, score.userUid().length())));
+            row.put("userId", score.userId());
+            row.put("displayName", String.valueOf(score.userId()).substring(0, Math.min(8, String.valueOf(score.userId()).length())));
+            row.put("nickname", String.valueOf(score.userId()).substring(0, Math.min(8, String.valueOf(score.userId()).length())));
             row.put("score", (int) score.correctAnswers()); // score 필드 명확히 설정
             row.put("correctAnswers", score.correctAnswers());
             row.put("totalTime", score.totalTime());
@@ -617,22 +617,22 @@ public class QuizService {
     /**
      * GameResultsResp를 생성합니다 (승자, 순위, 벌칙 정보 포함)
      */
-    private GameResultsResp buildGameResults(Long sessionId, List<UserScore> scores, String loserUid, Penalty penalty) {
+    private GameResultsResp buildGameResults(Long sessionId, List<UserScore> scores, Long loserUid, Penalty penalty) {
         // 실제 멤버 정보를 가져와서 닉네임 매핑
         List<GameSessionMember> members = memberRepo.findBySessionId(sessionId);
-        Map<String, String> userNicknames = members.stream()
+        Map<Long, String> userNicknames = members.stream()
                 .collect(java.util.stream.Collectors.toMap(
-                        GameSessionMember::getUserUid,
-                        m -> m.getNickname() != null ? m.getNickname() : m.getUserUid().substring(0, Math.min(8, m.getUserUid().length()))
+                        GameSessionMember::getUserId,
+                        m -> m.getNickname() != null ? m.getNickname() : String.valueOf(m.getUserId()).substring(0, Math.min(8, String.valueOf(m.getUserId()).length()))
                 ));
         
         // 점수를 기반으로 순위별 PlayerResult 생성 (1등이 승자)
         List<GameResultsResp.PlayerResult> ranking = new ArrayList<>();
         for (int i = 0; i < scores.size(); i++) {
             UserScore score = scores.get(scores.size() - 1 - i); // 역순으로 1등부터
-            String displayName = userNicknames.getOrDefault(score.userUid(), score.userUid().substring(0, Math.min(8, score.userUid().length())));
+            String displayName = userNicknames.getOrDefault(score.userId(), String.valueOf(score.userId()).substring(0, Math.min(8, String.valueOf(score.userId()).length())));
             ranking.add(GameResultsResp.PlayerResult.builder()
-                    .uid(score.userUid())
+                    .uid(String.valueOf(score.userId()))
                     .name(displayName)
                     .score((int) score.correctAnswers()) // 정답 개수를 score로 설정
                     .rank(i + 1)
@@ -917,21 +917,21 @@ public class QuizService {
 
             for (GameSessionMember member : members) {
                 try {
-                    String userUid = member.getUserUid();
-                    if (userUid == null || userUid.trim().isEmpty()) {
+                    Long userId = member.getUserId();
+                    if (userId == null) {
                         continue; // 잘못된 멤버는 건너뛰기
                     }
 
                     // 정답 수 조회 (null safe)
-                    Long correctCount = answerRepo.countCorrectAnswersByUser(sessionId, userUid);
+                    Long correctCount = answerRepo.countCorrectAnswersByUser(sessionId, userId);
                     int score = correctCount != null ? correctCount.intValue() : 0;
 
                     // 총 답변 수 조회 (null safe)
-                    Long totalAnswered = answerRepo.countAnswersByUser(sessionId, userUid);
+                    Long totalAnswered = answerRepo.countAnswersByUser(sessionId, userId);
                     int totalAnsweredInt = totalAnswered != null ? totalAnswered.intValue() : 0;
 
                     scoreboard.add(new ScoreboardItem(
-                            userUid,
+                            String.valueOf(userId),
                             score,
                             score, // correctCount와 동일
                             totalAnsweredInt,
@@ -940,7 +940,7 @@ public class QuizService {
 
                 } catch (Exception e) {
                     log.warn("Failed to process member in scoreboard: sessionId={}, member={}", 
-                            sessionId, member.getUserUid(), e);
+                            sessionId, member.getUserId(), e);
                     // 개별 멤버 처리 실패는 전체 결과에 영향주지 않음
                 }
             }
@@ -953,7 +953,7 @@ public class QuizService {
             for (int i = 0; i < scoreboard.size(); i++) {
                 ScoreboardItem item = scoreboard.get(i);
                 rankedScoreboard.add(new ScoreboardItem(
-                        item.userUid(),
+                        item.userId(),
                         item.score(),
                         item.correctCount(),
                         item.totalAnswered(),
@@ -984,12 +984,12 @@ public class QuizService {
         
         // 세션 멤버들과 점수 계산 (assignQuizPenalty와 동일한 로직)
         List<GameSessionMember> members = memberRepo.findBySessionId(sessionId);
-        List<String> userUids = members.stream()
-                .map(GameSessionMember::getUserUid)
+        List<Long> userIds = members.stream()
+                .map(GameSessionMember::getUserId)
                 .toList();
 
         List<UserScore> scores = new ArrayList<>();
-        for (String uid : userUids) {
+        for (Long uid : userIds) {
             Long correctCount = answerRepo.countCorrectAnswersByUser(sessionId, uid);
             Long totalTime = answerRepo.findTotalCorrectResponseTimeByUser(sessionId, uid);
             scores.add(new UserScore(
@@ -1010,7 +1010,7 @@ public class QuizService {
         Penalty penalty = penaltyRepository.findById(gamePenalty.getPenalty().getId())
                 .orElseThrow(() -> new IllegalStateException("Penalty not found: " + gamePenalty.getPenalty().getId()));
         
-        return buildGameResults(sessionId, scores, gamePenalty.getUserUid(), penalty);
+        return buildGameResults(sessionId, scores, gamePenalty.getUserId(), penalty);
     }
 
     /**
@@ -1300,9 +1300,9 @@ public class QuizService {
      * 🚀 멱등성 지원 답변 제출 (410 Gone + 중복 처리)
      */
     @Transactional
-    public AnswerResp submitAnswerIdempotent(Long sessionId, Long roundId, String userUid, Long optionId, Long responseTimeMs) {
+    public AnswerResp submitAnswerIdempotent(Long sessionId, Long roundId, Long userId, Long optionId, Long responseTimeMs) {
         log.info("[ANSWERS-BEFORE] sid={}, rid={}, uid={}, optionId={}", 
-            sessionId, roundId, userUid, optionId);
+            sessionId, roundId, userId, optionId);
         
         // 1. 라운드 존재 및 활성 상태 확인 → 404 Not Found  
         QuizRound round = roundRepo.findById(roundId)
@@ -1343,8 +1343,8 @@ public class QuizService {
         
         try {
             // 중복 제출 체크 후 저장 (race condition 방지)
-            if (answerRepo.existsByRoundAndUserUid(round, userUid)) {
-                log.info("[QUIZ-IDEM] Answer already submitted: roundId={}, userUid={}", roundId, userUid);
+            if (answerRepo.existsByRoundAndUserId(round, userId)) {
+                log.info("[QUIZ-IDEM] Answer already submitted: roundId={}, userId={}", roundId, userId);
                 
                 // 현재 상태 정보 반환
                 List<GameSessionMember> members = memberRepo.findBySessionId(sessionId);
@@ -1358,7 +1358,7 @@ public class QuizService {
             
             // 정답 텍스트를 옵션에서 가져와서 설정 + 응답시간 계산
             String answerText = option.getOptionText();
-            QuizAnswer answer = new QuizAnswer(round, userUid, optionId.intValue()); // choiceIndex 사용
+            QuizAnswer answer = new QuizAnswer(round, userId, optionId.intValue()); // choiceIndex 사용
             
             // 🔥 응답시간: 클라이언트가 제공한 responseTimeMs 사용 (더 정확)
             long clientResponseTimeMs = responseTimeMs != null ? responseTimeMs : 0L;
@@ -1368,15 +1368,15 @@ public class QuizService {
             answerRepo.save(answer);
             
             log.info("[ANSWERS-AFTER] sid={}, rid={}, uid={}, isCorrect={}, rtMs={}, answerId={}",
-                sessionId, roundId, userUid, isCorrect, clientResponseTimeMs, answer.getId());
+                sessionId, roundId, userId, isCorrect, clientResponseTimeMs, answer.getId());
             
-            log.info("[QUIZ-IDEM] Answer saved successfully: roundId={}, userUid={}, isCorrect={}, responseTimeMs={}", 
-                roundId, userUid, isCorrect, clientResponseTimeMs);
+            log.info("[QUIZ-IDEM] Answer saved successfully: roundId={}, userId={}, isCorrect={}, responseTimeMs={}", 
+                roundId, userId, isCorrect, clientResponseTimeMs);
                 
         } catch (org.springframework.dao.DataIntegrityViolationException e) {
             // 유니크 제약 충돌 - 이미 제출된 상태 (멱등 처리)
-            log.info("[QUIZ-IDEM] Data integrity violation (already submitted): roundId={}, userUid={}", 
-                roundId, userUid);
+            log.info("[QUIZ-IDEM] Data integrity violation (already submitted): roundId={}, userId={}", 
+                roundId, userId);
             
             List<GameSessionMember> members = memberRepo.findBySessionId(sessionId);
             int totalPlayers = members.size();
@@ -1418,5 +1418,118 @@ public class QuizService {
         }
         
         return AnswerResp.ok(isCorrect, score, 0, allSubmitted, (int) answeredPlayers, totalPlayers);
+    }
+    
+    /**
+     * 게임 시작시 모든 라운드를 미리 생성하는 새로운 메서드
+     */
+    @Transactional
+    public List<RoundResp> createAllRounds(Long sessionId, String category) {
+        log.info("[PRE-GENERATE] Creating all rounds for session: {}, category: {}", sessionId, category);
+        
+        GameSession session = findSession(sessionId);
+        if (session.getGameType() != GameSession.GameType.QUIZ) {
+            throw new IllegalStateException("Not a quiz session");
+        }
+        
+        // 이미 라운드가 생성되어 있는지 확인
+        List<QuizRound> existingRounds = roundRepo.findBySessionIdOrderByStartsAtDesc(sessionId);
+        if (!existingRounds.isEmpty()) {
+            log.info("[PRE-GENERATE] Rounds already exist for session: {}, count: {}", sessionId, existingRounds.size());
+            return existingRounds.stream()
+                    .sorted((a, b) -> Integer.compare(a.getRoundNo(), b.getRoundNo()))
+                    .map(RoundResp::from)
+                    .toList();
+        }
+        
+        int totalRounds = session.getTotalRounds() != null ? session.getTotalRounds() : 5;
+        log.info("[PRE-GENERATE] Creating {} rounds for session: {}", totalRounds, sessionId);
+        
+        List<RoundResp> createdRounds = new ArrayList<>();
+        
+        // 카테고리별 문제 조회
+        List<QuizQuestion> questions = findRandomQuestions(category, totalRounds);
+        if (questions.size() < totalRounds) {
+            throw new IllegalStateException("Not enough questions available. Found: " + questions.size() + ", needed: " + totalRounds);
+        }
+        
+        LocalDateTime baseTime = LocalDateTime.now();
+        
+        for (int i = 0; i < totalRounds; i++) {
+            QuizQuestion question = questions.get(i);
+            
+            // 각 라운드는 30초씩 진행 (첫 번째 라운드는 즉시 시작)
+            LocalDateTime startTime = baseTime.plusSeconds(i * 30L);
+            LocalDateTime expiresAt = startTime.plusSeconds(30);
+            
+            QuizRound round = QuizRound.builder()
+                    .sessionId(sessionId)
+                    .questionId(question.getId())
+                    .roundNo(i + 1)
+                    .startsAt(startTime)
+                    .expiresAt(expiresAt)
+                    .build();
+            
+            round = roundRepo.save(round);
+            createdRounds.add(RoundResp.from(round));
+            
+            log.info("[PRE-GENERATE] Created round {}/{} for session: {}, questionId: {}, starts: {}", 
+                    i + 1, totalRounds, sessionId, question.getId(), startTime);
+        }
+        
+        log.info("[PRE-GENERATE] Successfully created {} rounds for session: {}", totalRounds, sessionId);
+        return createdRounds;
+    }
+    
+    /**
+     * 게임 세션의 모든 라운드 조회 (순서대로 정렬)
+     */
+    @Transactional(readOnly = true)
+    public List<RoundResp> getAllRounds(Long sessionId) {
+        log.info("[ALL-ROUNDS] Getting all rounds for session: {}", sessionId);
+        
+        List<QuizRound> rounds = roundRepo.findBySessionIdOrderByStartsAtDesc(sessionId);
+        if (rounds.isEmpty()) {
+            log.warn("[ALL-ROUNDS] No rounds found for session: {}", sessionId);
+            return List.of();
+        }
+        
+        // 라운드 번호 순으로 정렬 (1, 2, 3, ...)
+        List<RoundResp> sortedRounds = rounds.stream()
+                .sorted((a, b) -> Integer.compare(a.getRoundNo(), b.getRoundNo()))
+                .map(RoundResp::from)
+                .toList();
+        
+        log.info("[ALL-ROUNDS] Found {} rounds for session: {}", sortedRounds.size(), sessionId);
+        return sortedRounds;
+    }
+    
+    /**
+     * 카테고리별 랜덤 문제 조회 헬퍼 메서드
+     */
+    private List<QuizQuestion> findRandomQuestions(String category, int count) {
+        Page<QuizQuestion> questionsPage = questionRepo.search(null, category, PageRequest.of(0, Math.max(count * 2, 100)));
+        List<QuizQuestion> allQuestions = questionsPage.getContent();
+        
+        if (allQuestions.isEmpty()) {
+            throw new IllegalStateException("No questions found for category: " + category);
+        }
+        
+        // 기존 코드와 같은 방식으로 랜덤 선택
+        List<QuizQuestion> selectedQuestions = new ArrayList<>();
+        Random random = new Random();
+        Set<Integer> usedIndices = new HashSet<>();
+        
+        for (int i = 0; i < count && i < allQuestions.size(); i++) {
+            int randomIndex;
+            do {
+                randomIndex = random.nextInt(allQuestions.size());
+            } while (usedIndices.contains(randomIndex));
+            
+            usedIndices.add(randomIndex);
+            selectedQuestions.add(allQuestions.get(randomIndex));
+        }
+        
+        return selectedQuestions;
     }
 }

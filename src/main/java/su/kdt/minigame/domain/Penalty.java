@@ -21,8 +21,8 @@ public class Penalty {
     @Column(name = "slug", nullable = false, unique = true, length = 64)
     private String slug;
 
-    @Column(name = "user_uid", length = 100)
-    private String userUid;
+    @Column(name = "user_id")
+    private Long userId;
 
     @Column(name = "penalty_text", nullable = false, length = 255)
     private String text;
@@ -30,9 +30,9 @@ public class Penalty {
     @Column(name = "created_at")
     private Instant createdAt;
 
-    public Penalty(String text, String userUid) {
+    public Penalty(String text, Long userId) {
         this.text = text;
-        this.userUid = userUid;
+        this.userId = userId;
         this.slug = generateSlug(text); // 🔥 핵심 수정: slug 자동 생성
         this.createdAt = Instant.now();
     }
@@ -41,7 +41,7 @@ public class Penalty {
     public Penalty(String slug, String text, String systemMarker) {
         this.slug = slug;
         this.text = text;
-        this.userUid = "system"; // 시스템 기본 벌칙
+        this.userId = 0L; // 시스템 기본 벌칙 (user_id = 0)
         this.createdAt = Instant.now();
     }
     
@@ -71,8 +71,8 @@ public class Penalty {
         this.text = text;
     }
     
-    public void setUserUid(String userUid) {
-        this.userUid = userUid;
+    public void setUserId(Long userId) {
+        this.userId = userId;
     }
     
     public void setCreatedAt(Instant createdAt) {
@@ -82,6 +82,15 @@ public class Penalty {
     // 하위 호환성을 위한 메소드들
     public Long getId() {
         return this.penaltyId;
+    }
+    
+    public Long getUserId() {
+        return this.userId;
+    }
+    
+    // Backward compatibility method
+    public String getUserUid() {
+        return String.valueOf(this.userId);
     }
     
     public String getDescription() {

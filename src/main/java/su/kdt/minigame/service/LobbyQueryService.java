@@ -129,6 +129,7 @@ public class LobbyQueryService {
     ) {
         // Helper methods for compatibility with legacy code
         public String userUid() { return uid; }
+        public String userId() { return uid; }
         public boolean isReady() { 
             // For now, all members are considered ready in lobby
             // This could be extended to read from GameSessionMember.isReady if needed

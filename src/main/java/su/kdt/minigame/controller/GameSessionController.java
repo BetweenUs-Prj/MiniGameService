@@ -78,8 +78,9 @@ public class GameSessionController {
             @RequestBody CreateSessionReq request
     ) {
         log.info("[USAGE] createSession called - gameType: {}, category: {}", request.gameType(), request.category());
-        String userUid = (String) httpRequest.getAttribute(UidResolverFilter.ATTR_UID);
-        SessionResp response = gameSessionService.createSession(request, userUid);
+        String userUidStr = (String) httpRequest.getAttribute(UidResolverFilter.ATTR_UID);
+        Long userId = Long.valueOf(userUidStr);
+        SessionResp response = gameSessionService.createSession(request, userId);
         return ResponseEntity.created(URI.create("/api/mini-games/sessions/" + response.sessionId()))
                 .body(response);
     }
@@ -102,7 +103,8 @@ public class GameSessionController {
             HttpServletRequest httpRequest
     ) {
         log.info("[USAGE] joinBySessionId called - sessionId: {}", sessionId);
-        String userUid = (String) httpRequest.getAttribute(UidResolverFilter.ATTR_UID);
+        String userUidStr = (String) httpRequest.getAttribute(UidResolverFilter.ATTR_UID);
+        Long userId = Long.valueOf(userUidStr);
         try {
             // sessionId로 세션을 찾고 inviteCode를 가져와서 기존 로직 재사용
             GameSession session = gameSessionService.getSession(sessionId);
@@ -110,7 +112,7 @@ public class GameSessionController {
             // 세션 상태별 로직 처리
             if (session.getStatus().equals(GameSession.Status.IN_PROGRESS)) {
                 // 이미 진행 중인 게임 - 이미 참여한 사용자라면 게임으로 리다이렉트
-                boolean isAlreadyMember = gameSessionService.isUserInSession(sessionId, userUid);
+                boolean isAlreadyMember = gameSessionService.isUserInSession(sessionId, userId);
                 if (isAlreadyMember) {
                     // 진행 중인 게임에 이미 참여한 사용자 - 성공으로 처리하고 게임 상태 반환
                     LobbyQueryService.LobbySnapshot snapshot = gameSessionService.getLobbySnapshot(sessionId);
@@ -142,12 +144,12 @@ public class GameSessionController {
             if (session.getGameType() == GameSession.GameType.REACTION && 
                 session.getStatus().equals(GameSession.Status.IN_PROGRESS)) {
                 
-                log.info("Allowing late join for reaction game - sessionId: {}, userUid: {}", sessionId, userUid);
+                log.info("Allowing late join for reaction game - sessionId: {}, userId: {}", sessionId, userId);
                 
                 // 늦은 참가자는 즉시 세션에 추가
-                GameSessionMember member = memberRepo.findBySessionIdAndUserUid(sessionId, userUid).orElse(null);
+                GameSessionMember member = memberRepo.findBySessionIdAndUserId(sessionId, userId).orElse(null);
                 if (member == null) {
-                    member = new GameSessionMember(sessionId, userUid);
+                    member = new GameSessionMember(sessionId, userId);
                     member.setReady(true); // 게임이 이미 진행중이므로 자동으로 ready 상태
                     memberRepo.save(member);
                 }
@@ -168,7 +170,7 @@ public class GameSessionController {
             
             // 초대 전용 세션인지 체크 (코드가 FRIEND- 로 시작하는지 확인)
             String inviteCode = gameSessionService.generateInviteCode(sessionId, true);
-            if (inviteCode.startsWith("FRIEND-") && !session.getHostUid().equals(userUid)) {
+            if (inviteCode.startsWith("FRIEND-") && !session.getHostUid().equals(String.valueOf(userId))) {
                 Map<String, Object> errorBody = Map.of(
                         "code", "INVITE_ONLY",
                         "message", "초대 링크로만 입장할 수 있어요"
@@ -177,8 +179,8 @@ public class GameSessionController {
             }
             
             // 멱등성을 보장하는 joinByCode 호출 - 이미 참가한 경우 409가 아니라 200을 반환
-            log.info("🎯 [CONTROLLER] POST /join - sessionId: {}, userUid: {}", sessionId, userUid);
-            LobbyQueryService.LobbySnapshot oldSnapshot = gameSessionService.joinByCode(sessionId.toString(), userUid);
+            log.info("🎯 [CONTROLLER] POST /join - sessionId: {}, userId: {}", sessionId, userId);
+            LobbyQueryService.LobbySnapshot oldSnapshot = gameSessionService.joinByCode(sessionId.toString(), userId);
             
             // Use new unified snapshot service for consistent response
             LobbyQueryService.LobbySnapshot snapshot = lobbyQueryService.getLobbySnapshot(sessionId);
@@ -210,11 +212,12 @@ public class GameSessionController {
             HttpServletRequest httpRequest
     ) {
         log.info("[USAGE] joinByCode called - inviteCode: {}", request.get("inviteCode"));
-        String userUid = (String) httpRequest.getAttribute(UidResolverFilter.ATTR_UID);
+        String userUidStr = (String) httpRequest.getAttribute(UidResolverFilter.ATTR_UID);
+        Long userId = Long.valueOf(userUidStr);
         String code = request.get("code");
         String pin = request.get("pin"); // PIN 파라미터 추가
         try {
-            LobbyQueryService.LobbySnapshot snapshot = gameSessionService.joinByCode(code, userUid, pin);
+            LobbyQueryService.LobbySnapshot snapshot = gameSessionService.joinByCode(code, userId, pin);
             return ResponseEntity.ok(snapshot);
         } catch (GameSessionService.SessionFullException e) {
             Map<String, Object> errorBody = Map.of(
@@ -249,12 +252,12 @@ public class GameSessionController {
                     if (session.getGameType() == GameSession.GameType.REACTION && 
                         session.getStatus().equals(GameSession.Status.IN_PROGRESS)) {
                         
-                        log.info("Allowing late join for reaction game via code - sessionId: {}, userUid: {}", lookup.sessionId(), userUid);
+                        log.info("Allowing late join for reaction game via code - sessionId: {}, userId: {}", lookup.sessionId(), userId);
                         
                         // Check if user is already a member
-                        Optional<GameSessionMember> existingMember = memberRepo.findBySessionIdAndUserUid((long) lookup.sessionId(), userUid);
+                        Optional<GameSessionMember> existingMember = memberRepo.findBySessionIdAndUserId((long) lookup.sessionId(), userId);
                         if (existingMember.isPresent()) {
-                            log.info("User {} already joined session {}, returning lobby snapshot", userUid, lookup.sessionId());
+                            log.info("User {} already joined session {}, returning lobby snapshot", userId, lookup.sessionId());
                             LobbyQueryService.LobbySnapshot snapshot = lobbyQueryService.getLobbySnapshot((long) lookup.sessionId());
                             log.debug("[LOBBY] POST /join (LateJoinExisting) - sessionId: {}, members.size(): {}, count: {}", 
                                     lookup.sessionId(), snapshot.members().size(), snapshot.count());
@@ -262,11 +265,11 @@ public class GameSessionController {
                         }
                         
                         // Add user as new member for late join
-                        GameSessionMember newMember = new GameSessionMember((long) lookup.sessionId(), userUid);
+                        GameSessionMember newMember = new GameSessionMember((long) lookup.sessionId(), userId);
                         newMember.setReady(true); // Auto-ready for late join
                         
                         memberRepo.save(newMember);
-                        log.info("User {} joined reaction game {} as late participant", userUid, lookup.sessionId());
+                        log.info("User {} joined reaction game {} as late participant", userId, lookup.sessionId());
                         
                         LobbyQueryService.LobbySnapshot snapshot = lobbyQueryService.getLobbySnapshot((long) lookup.sessionId());
                         log.debug("[LOBBY] POST /join (LateJoinNew) - sessionId: {}, members.size(): {}, count: {}", 
@@ -329,7 +332,7 @@ public class GameSessionController {
         sessionDetails.put("totalRounds", session.getTotalRounds());
         sessionDetails.put("hostUid", session.getHostUid());
         sessionDetails.put("participants", lobby.members().stream().map(m -> Map.of(
-                "userUid", m.userUid(),
+                "userId", m.userId(),
                 "isReady", m.isReady(),
                 "joinedAt", m.joinedAt()
         )).toList());
@@ -396,8 +399,9 @@ public class GameSessionController {
             @PathVariable Long sessionId,
             HttpServletRequest httpRequest
     ) {
-        String userUid = (String) httpRequest.getAttribute(UidResolverFilter.ATTR_UID);
-        gameSessionService.leaveSession(sessionId, userUid);
+        String userUidStr = (String) httpRequest.getAttribute(UidResolverFilter.ATTR_UID);
+        Long userId = Long.valueOf(userUidStr);
+        gameSessionService.leaveSession(sessionId, userId);
         return ResponseEntity.noContent().build();
     }
 
@@ -409,10 +413,11 @@ public class GameSessionController {
             @PathVariable Long sessionId,
             HttpServletRequest httpRequest
     ) {
-        String userUid = (String) httpRequest.getAttribute(UidResolverFilter.ATTR_UID);
+        String userUidStr = (String) httpRequest.getAttribute(UidResolverFilter.ATTR_UID);
+        Long userId = Long.valueOf(userUidStr);
         
         try {
-            gameSessionService.cancelSession(sessionId, userUid);
+            gameSessionService.cancelSession(sessionId, userId);
             return ResponseEntity.ok(Map.of("message", "세션이 취소되었습니다."));
         } catch (GameSessionService.NotHostException e) {
             Map<String, Object> errorBody = Map.of(
@@ -511,10 +516,11 @@ public class GameSessionController {
             @PathVariable Long sessionId,
             HttpServletRequest httpRequest
     ) {
-        String userUid = (String) httpRequest.getAttribute(UidResolverFilter.ATTR_UID);
+        String userUidStr = (String) httpRequest.getAttribute(UidResolverFilter.ATTR_UID);
+        Long userId = Long.valueOf(userUidStr);
         
         try {
-            gameSessionService.toggleReady(sessionId, userUid);
+            gameSessionService.toggleReady(sessionId, userId);
             return ResponseEntity.ok(Map.of("message", "준비 상태가 변경되었습니다."));
         } catch (GameSessionService.InvalidStatusException e) {
             Map<String, Object> errorBody = Map.of(
@@ -533,7 +539,8 @@ public class GameSessionController {
             @PathVariable Long sessionId,
             @PathVariable String userUid
     ) {
-        GameSessionService.MemberInfo memberInfo = gameSessionService.getMemberInfo(sessionId, userUid);
+        Long userId = Long.valueOf(userUid);
+        GameSessionService.MemberInfo memberInfo = gameSessionService.getMemberInfo(sessionId, userId);
         return ResponseEntity.ok(memberInfo);
     }
 
@@ -545,7 +552,8 @@ public class GameSessionController {
             @PathVariable Long sessionId,
             @PathVariable String userUid
     ) {
-        boolean exists = gameSessionService.isUserInSession(sessionId, userUid);
+        Long userId = Long.valueOf(userUid);
+        boolean exists = gameSessionService.isUserInSession(sessionId, userId);
         return ResponseEntity.ok(Map.of("exists", exists));
     }
 
@@ -559,9 +567,11 @@ public class GameSessionController {
             HttpServletRequest httpRequest
     ) {
         String hostUid = (String) httpRequest.getAttribute(UidResolverFilter.ATTR_UID);
+        Long hostId = Long.valueOf(hostUid);
+        Long targetUserId = Long.valueOf(targetUid);
         
         try {
-            gameSessionService.kickMember(sessionId, targetUid, hostUid);
+            gameSessionService.kickMember(sessionId, targetUserId, hostId);
             return ResponseEntity.ok(Map.of("message", "강퇴되었습니다."));
         } catch (GameSessionService.NotHostException e) {
             Map<String, Object> errorBody = Map.of(
@@ -690,7 +700,7 @@ public class GameSessionController {
             // 프론트엔드 호환성을 위한 형식으로 변환
             List<Map<String, Object>> scores = scoreboard.stream()
                 .map(item -> Map.<String, Object>of(
-                    "userUid", item.userUid(),
+                    "userId", item.userId(),
                     "totalScore", item.score(),
                     "score", item.score(),
                     "correctCount", item.correctCount(),

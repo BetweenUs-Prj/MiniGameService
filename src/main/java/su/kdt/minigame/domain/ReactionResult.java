@@ -23,8 +23,8 @@ public class ReactionResult {
     @Column(name = "session_id", nullable = false)
     private Long sessionId;
 
-    @Column(name = "user_uid", nullable = false, length = 100)
-    private String userUid;
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
 
     @Column(name = "delta_ms")
     private Integer deltaMs;
@@ -38,9 +38,9 @@ public class ReactionResult {
     @Column(name = "false_start")
     private Boolean falseStart = false;
 
-    public ReactionResult(Long sessionId, String userUid) {
+    public ReactionResult(Long sessionId, Long userId) {
         this.sessionId = sessionId;
-        this.userUid = userUid;
+        this.userId = userId;
         this.falseStart = false;
         this.deltaMs = null;
     }
@@ -80,8 +80,13 @@ public class ReactionResult {
         return this.clickedAt;
     }
     
+    public Long getUserId() {
+        return this.userId;
+    }
+    
+    // Backward compatibility method
     public String getUserUid() {
-        return this.userUid;
+        return String.valueOf(this.userId);
     }
     
     // For backward compatibility with old session-based methods

@@ -18,8 +18,8 @@ public class GameSessionMember {
     private Long sessionId;
 
     @Id
-    @Column(name = "user_uid")
-    private String userUid;
+    @Column(name = "user_id")
+    private Long userId;
 
     @Column(name = "is_ready")
     private Boolean isReady = false;
@@ -27,9 +27,9 @@ public class GameSessionMember {
     @Column(name = "joined_at")
     private LocalDateTime joinedAt;
 
-    public GameSessionMember(Long sessionId, String userUid) {
+    public GameSessionMember(Long sessionId, Long userId) {
         this.sessionId = sessionId;
-        this.userUid = userUid;
+        this.userId = userId;
         this.isReady = false;
         this.joinedAt = LocalDateTime.now();
     }
@@ -44,6 +44,15 @@ public class GameSessionMember {
 
     // 임시로 nickname을 userUid로 반환 (실제로는 별도 필드가 필요할 수 있음)
     public String getNickname() {
-        return this.userUid;
+        return String.valueOf(this.userId);
+    }
+    
+    public Long getUserId() {
+        return this.userId;
+    }
+    
+    // Backward compatibility method
+    public String getUserUid() {
+        return String.valueOf(this.userId);
     }
 }

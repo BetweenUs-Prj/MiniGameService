@@ -43,7 +43,7 @@ public class GameSessionService {
 
 
     @Transactional
-    public SessionResp createSession(CreateSessionReq request, String userUid) {
+    public SessionResp createSession(CreateSessionReq request, Long userId) {
         Penalty selectedPenalty;
         
         if (request.penaltyId() != null) {
@@ -60,10 +60,10 @@ public class GameSessionService {
         SessionResp response;
 
         if ("REACTION".equals(gameType)) {
-            response = reactionGameService.createReactionSession(request, userUid, selectedPenalty);
+            response = reactionGameService.createReactionSession(request, userId, selectedPenalty);
 
         } else if ("QUIZ".equals(gameType)) {
-            response = quizService.createQuizSession(request, userUid, selectedPenalty);
+            response = quizService.createQuizSession(request, userId, selectedPenalty);
 
         } else {
             throw new IllegalArgumentException("지원하지 않는 게임 타입입니다: " + gameType);
@@ -112,12 +112,12 @@ public class GameSessionService {
     }
 
     @Transactional
-    public LobbyQueryService.LobbySnapshot joinByCode(String code, String userUid) {
-        return joinByCode(code, userUid, null);
+    public LobbyQueryService.LobbySnapshot joinByCode(String code, Long userId) {
+        return joinByCode(code, userId, null);
     }
 
     @Transactional
-    public LobbyQueryService.LobbySnapshot joinByCode(String code, String userUid, String pin) {
+    public LobbyQueryService.LobbySnapshot joinByCode(String code, Long userId, String pin) {
         Long sessionId;
         
         // 1. 코드 접두사 처리하여 실제 세션ID 추출
@@ -165,10 +165,10 @@ public class GameSessionService {
         // CANCELLED 및 WAITING 세션은 참가 허용 - 호스트가 일시적으로 떠났거나 새로운 참가자를 위해
 
         // 3. 멤버 이미 존재하면 스냅샷 반환 (재접속) - 멱등성 보장
-        Optional<GameSessionMember> existingMember = memberRepo.findBySessionIdAndUserUid(sessionId, userUid);
+        Optional<GameSessionMember> existingMember = memberRepo.findBySessionIdAndUserId(sessionId, userId);
         if (existingMember.isPresent()) {
             // 이미 참가된 경우 409를 던지지 않고 현재 스냅샷을 반환 (멱등성)
-            log.debug("[JOIN] User {} already in session {}, returning existing snapshot", userUid, sessionId);
+            log.debug("[JOIN] User {} already in session {}, returning existing snapshot", userId, sessionId);
             return lobbyQueryService.getLobbySnapshot(sessionId);
         }
 
@@ -182,20 +182,20 @@ public class GameSessionService {
 
         // 6. 멤버 추가 (중복 방지를 위해 try-catch 사용)
         try {
-            GameSessionMember newMember = new GameSessionMember(sessionId, userUid);
+            GameSessionMember newMember = new GameSessionMember(sessionId, userId);
             memberRepo.save(newMember);
-            log.debug("[JOIN] Successfully added member {} to session {}", userUid, sessionId);
+            log.debug("[JOIN] Successfully added member {} to session {}", userId, sessionId);
         } catch (Exception e) {
             // 중복 키 에러 시 재시도하지 않고 기존 데이터 반환 (race condition 처리)
-            log.warn("[JOIN] Duplicate key detected for session {} user {}, returning existing snapshot: {}", sessionId, userUid, e.getMessage());
+            log.warn("[JOIN] Duplicate key detected for session {} user {}, returning existing snapshot: {}", sessionId, userId, e.getMessage());
             return lobbyQueryService.getLobbySnapshot(sessionId);
         }
 
         // 7. 트랜잭션 커밋 후 브로드캐스트를 위한 이벤트 발행
         String gameType = session.getGameType().name();
-        log.info("🚀 [JOIN-EVENT] Publishing MemberJoinedEvent - sessionId: {}, userUid: {}, gameType: {}", 
-                sessionId, userUid, gameType);
-        eventPublisher.publishEvent(new LobbyEvents.MemberJoinedEvent(sessionId, userUid, gameType));
+        log.info("🚀 [JOIN-EVENT] Publishing MemberJoinedEvent - sessionId: {}, userId: {}, gameType: {}", 
+                sessionId, userId, gameType);
+        eventPublisher.publishEvent(new LobbyEvents.MemberJoinedEvent(sessionId, String.valueOf(userId), gameType));
         log.info("✅ [JOIN-EVENT] Event published successfully");
         
         // 8. 즉시 강제 브로드캐스트 (이벤트 리스너 실패 시 백업)
@@ -209,7 +209,7 @@ public class GameSessionService {
         LobbyQueryService.LobbySnapshot snapshot = lobbyQueryService.getLobbySnapshot(sessionId);
         
         // 감사 로그
-        log.info("[AUDIT] PLAYER_JOINED - sessionId: {}, userUid: {}, count: {}", sessionId, userUid, snapshot.count());
+        log.info("[AUDIT] PLAYER_JOINED - sessionId: {}, userId: {}, count: {}", sessionId, userId, snapshot.count());
         
         // 9. 퀴즈 게임인 경우 점수판 초기화 브로드캐스트
         if (session.getGameType() == GameSession.GameType.QUIZ) {
@@ -286,18 +286,18 @@ public class GameSessionService {
     // Response DTOs
 
     @Transactional
-    public void leaveSession(Long sessionId, String userUid) {
+    public void leaveSession(Long sessionId, Long userId) {
         // Check if session exists
         GameSession session = gameRepo.findById(sessionId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Session not found"));
         
         // Host leaving no longer cancels the session - just remove from member list
         // This allows hosts to refresh/navigate away without destroying the session for participants
-        memberRepo.deleteBySessionIdAndUserUid(sessionId, userUid);
+        memberRepo.deleteBySessionIdAndUserId(sessionId, userId);
         
         // 트랜잭션 커밋 후 브로드캐스트를 위한 이벤트 발행
         String gameType = session.getGameType().name();
-        eventPublisher.publishEvent(new LobbyEvents.MemberLeftEvent(sessionId, userUid, gameType));
+        eventPublisher.publishEvent(new LobbyEvents.MemberLeftEvent(sessionId, String.valueOf(userId), gameType));
         
         // 즉시 강제 브로드캐스트 (이벤트 리스너 실패 시 백업)
         log.info("🔥 [FORCE-SYNC] Triggering immediate lobby broadcast for member leave");
@@ -307,17 +307,17 @@ public class GameSessionService {
         broadcastSessionState(sessionId, "PLAYER_LEFT");
         
         // 감사 로그 (이벤트 리스너에서 처리)
-        log.info("[AUDIT] PLAYER_LEFT - sessionId: {}, userUid: {}", sessionId, userUid);
+        log.info("[AUDIT] PLAYER_LEFT - sessionId: {}, userId: {}", sessionId, userId);
     }
 
     @Transactional
-    public void cancelSession(Long sessionId, String userUid) {
+    public void cancelSession(Long sessionId, Long userId) {
         // Check if session exists
         GameSession session = gameRepo.findById(sessionId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Session not found"));
         
         // Only host can cancel sessions
-        if (!session.getHostUid().equals(userUid)) {
+        if (!session.getHostUid().equals(userId)) {
             throw new NotHostException();
         }
         
@@ -347,7 +347,7 @@ public class GameSessionService {
     }
 
     public record MemberInfo(
-            String userUid,
+            Long userId,
             boolean isReady,
             java.time.LocalDateTime joinedAt
     ) {}
@@ -359,16 +359,16 @@ public class GameSessionService {
     ) {}
 
     @Transactional(readOnly = true)
-    public MemberInfo getMemberInfo(Long sessionId, String userUid) {
-        GameSessionMember member = memberRepo.findBySessionIdAndUserUid(sessionId, userUid)
+    public MemberInfo getMemberInfo(Long sessionId, Long userId) {
+        GameSessionMember member = memberRepo.findBySessionIdAndUserId(sessionId, userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Member not found"));
         
-        return new MemberInfo(member.getUserUid(), member.isReady(), member.getJoinedAt());
+        return new MemberInfo(member.getUserId(), member.isReady(), member.getJoinedAt());
     }
 
     @Transactional(readOnly = true)
-    public boolean isUserInSession(Long sessionId, String userUid) {
-        return memberRepo.findBySessionIdAndUserUid(sessionId, userUid).isPresent();
+    public boolean isUserInSession(Long sessionId, Long userId) {
+        return memberRepo.findBySessionIdAndUserId(sessionId, userId).isPresent();
     }
     
     // 강퇴 관련 예외 클래스들
@@ -416,31 +416,31 @@ public class GameSessionService {
     }
     
     @Transactional
-    public void kickMember(Long sessionId, String targetUid, String hostUid) {
+    public void kickMember(Long sessionId, Long targetUserId, Long hostUserId) {
         GameSession session = gameRepo.findById(sessionId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Session not found"));
         
         // 호스트 권한 확인
-        if (!session.getHostUid().equals(hostUid)) {
+        if (!session.getHostUid().equals(String.valueOf(hostUserId))) {
             throw new NotHostException();
         }
         
         // 호스트 자신은 강퇴 불가
-        if (session.getHostUid().equals(targetUid)) {
+        if (session.getHostUid().equals(String.valueOf(targetUserId))) {
             throw new CannotKickHostException();
         }
         
         // 멤버 존재 확인
-        Optional<GameSessionMember> targetMember = memberRepo.findBySessionIdAndUserUid(sessionId, targetUid);
+        Optional<GameSessionMember> targetMember = memberRepo.findBySessionIdAndUserId(sessionId, targetUserId);
         if (targetMember.isEmpty()) {
             throw new MemberNotFoundException();
         }
         
         // 멤버 삭제
-        memberRepo.deleteBySessionIdAndUserUid(sessionId, targetUid);
+        memberRepo.deleteBySessionIdAndUserId(sessionId, targetUserId);
         
         // 강퇴된 사용자에게 개인 메시지 (SSE)
-        sseService.sendToUser(sessionId, targetUid, "player-kicked", 
+        sseService.sendToUser(sessionId, String.valueOf(targetUserId), "player-kicked", 
                 Map.of("message", "방장에 의해 강퇴되었습니다."));
         
         // 업데이트된 멤버 목록 SSE 브로드캐스트
@@ -457,7 +457,7 @@ public class GameSessionService {
     }
 
     @Transactional  
-    public void toggleReady(Long sessionId, String userUid) {
+    public void toggleReady(Long sessionId, Long userId) {
         GameSession session = gameRepo.findById(sessionId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Session not found"));
         
@@ -465,7 +465,7 @@ public class GameSessionService {
             throw new InvalidStatusException();
         }
         
-        GameSessionMember member = memberRepo.findBySessionIdAndUserUid(sessionId, userUid)
+        GameSessionMember member = memberRepo.findBySessionIdAndUserId(sessionId, userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Member not found"));
         
         member.setReady(!member.isReady());
@@ -504,8 +504,8 @@ public class GameSessionService {
                     "sessionId", sessionId,
                     "status", session.getStatus().name(),
                     "players", members.stream().map(m -> Map.of(
-                            "uid", m.getUserUid(),
-                            "name", m.getUserUid().substring(0, Math.min(8, m.getUserUid().length())),
+                            "uid", m.getUserId(),
+                            "name", String.valueOf(m.getUserId()).substring(0, Math.min(8, String.valueOf(m.getUserId()).length())),
                             "isReady", m.isReady()
                     )).toList(),
                     "total", members.size()
@@ -574,8 +574,8 @@ public class GameSessionService {
             List<Map<String, Object>> scoreboard = members.stream()
                 .map(member -> {
                     Map<String, Object> row = new HashMap<>();
-                    row.put("userUid", member.getUserUid());
-                    row.put("nickname", member.getUserUid().substring(0, Math.min(8, member.getUserUid().length())));
+                    row.put("userId", member.getUserId());
+                    row.put("nickname", String.valueOf(member.getUserId()).substring(0, Math.min(8, String.valueOf(member.getUserId()).length())));
                     row.put("score", 0); // 초기 점수는 0
                     return row;
                 })

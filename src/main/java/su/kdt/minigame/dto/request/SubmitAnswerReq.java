@@ -22,4 +22,9 @@ public record SubmitAnswerReq(
     public String answerText() {
         return optionId != null ? String.valueOf(optionId) : null;
     }
+    
+    // For Long userId compatibility
+    public Long userId() {
+        return userUid != null ? Long.valueOf(userUid) : null;
+    }
 }

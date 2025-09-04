@@ -2,7 +2,7 @@
 -- 목적: 모든 벌칙의 내용을 관리합니다. 사용자가 직접 생성하거나, 시스템이 기본으로 제공하는 벌칙을 모두 이 테이블에 저장합니다.
 CREATE TABLE IF NOT EXISTS penalty (
     penalty_id BIGINT PRIMARY KEY AUTO_INCREMENT,   -- 벌칙의 고유 식별자입니다.
-    user_uid   VARCHAR(100) NOT NULL,               -- 벌칙을 생성한 사용자의 고유 ID입니다.
+    user_id    BIGINT NOT NULL,                     -- 벌칙을 생성한 사용자의 ID입니다. (users 테이블 참조)
     penalty_text VARCHAR(255) NOT NULL,             -- 벌칙의 실제 내용입니다. (예: "커피 사기")
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP  -- 벌칙이 생성된 시각입니다.
 );
@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS penalty (
 CREATE TABLE game_session (
     session_id          BIGINT PRIMARY KEY AUTO_INCREMENT,  -- 게임 세션의 고유 식별자입니다.
     appointment_id      BIGINT,                    -- 이 게임이 어떤 약속에 속해있는지를 나타내는 ID입니다. (MSA 환경에서 '약속 서비스'와 연결됩니다.)
-    host_uid            VARCHAR(100) NOT NULL,              -- 게임을 생성한 방장의 사용자 ID입니다. 이 사용자가 설정한 벌칙 목록이 게임에 사용됩니다.
+    host_id             BIGINT NOT NULL,                    -- 게임을 생성한 방장의 사용자 ID입니다. (users 테이블 참조)
     game_type           VARCHAR(50) NOT NULL,               -- 생성된 게임의 종류입니다. (예: 'REACTION', 'QUIZ')
     status              VARCHAR(50) DEFAULT 'WAITING',      -- 게임의 현재 진행 상태입니다. (WAITING, IN_PROGRESS, FINISHED)
     start_time          TIMESTAMP NULL,                     -- 게임이 실제로 시작된 시각입니다.
@@ -30,10 +30,10 @@ CREATE TABLE game_session (
 -- 목적: 게임이 끝난 후, 최종적으로 결정된 패자와 그에게 할당된 벌칙을 기록하는 '결과표'입니다.
 CREATE TABLE game_penalty (
     game_id    BIGINT NOT NULL,                       -- 벌칙이 발생한 게임 세션의 ID입니다.
-    user_uid   VARCHAR(100) NOT NULL,                 -- 벌칙을 받게 된 패자의 사용자 ID입니다.
+    user_id    BIGINT NOT NULL,                       -- 벌칙을 받게 된 패자의 사용자 ID입니다. (users 테이블 참조)
     penalty_id BIGINT NOT NULL,                       -- 패자에게 할당된 벌칙의 ID입니다.
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,   -- 벌칙이 할당된 시각입니다.
-    PRIMARY KEY (game_id, user_uid),                  -- 한 게임당 한 명의 패자만 존재하도록 보장합니다.
+    PRIMARY KEY (game_id, user_id),                   -- 한 게임당 한 명의 패자만 존재하도록 보장합니다.
     FOREIGN KEY (game_id) REFERENCES game_session(session_id),
     FOREIGN KEY (penalty_id) REFERENCES penalty(penalty_id)
 );
@@ -73,23 +73,23 @@ CREATE TABLE quiz_round (
 CREATE TABLE quiz_answer (
     answer_id        BIGINT PRIMARY KEY AUTO_INCREMENT,  -- 답변의 고유 식별자입니다.
     round_id         BIGINT NOT NULL,                    -- 이 답변이 어떤 라운드에 대한 것인지를 나타냅니다.
-    user_uid         VARCHAR(100) NOT NULL,              -- 답변을 제출한 사용자의 ID입니다.
+    user_id          BIGINT NOT NULL,                    -- 답변을 제출한 사용자의 ID입니다. (users 테이블 참조)
     answer_text      TEXT NOT NULL,                      -- 사용자가 제출한 답변의 내용입니다.
     answer_time      TIMESTAMP,                          -- 답변을 제출한 시각입니다.
     is_correct       BOOLEAN,                            -- 제출된 답변의 정답 여부입니다.
     response_time_ms BIGINT,                             -- [규칙 핵심] 정답인 경우, 라운드 시작부터 정답 제출까지 걸린 시간(ms)입니다. 이 값의 총합이 가장 큰 사용자가 패배합니다.
     FOREIGN KEY (round_id) REFERENCES quiz_round(round_id),
-    CONSTRAINT uq_round_user UNIQUE (round_id, user_uid)  -- 중복 답변 방지
+    CONSTRAINT uq_round_user UNIQUE (round_id, user_id)   -- 중복 답변 방지
 );
 
 -- 테이블: game_session_member
 -- 목적: 게임 세션에 참여하는 멤버들을 관리합니다. 최대 10명까지 참여 가능하며, 각 멤버의 준비 상태를 추적합니다.
 CREATE TABLE game_session_member (
     session_id  BIGINT NOT NULL,                        -- 게임 세션의 ID입니다.
-    user_uid    VARCHAR(100) NOT NULL,                  -- 참여하는 사용자의 고유 ID입니다.
+    user_id     BIGINT NOT NULL,                        -- 참여하는 사용자의 ID입니다. (users 테이블 참조)
     is_ready    BOOLEAN DEFAULT FALSE,                  -- 사용자의 준비 상태입니다.
     joined_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,    -- 세션에 참여한 시각입니다.
-    PRIMARY KEY (session_id, user_uid),                 -- 복합 기본키로 한 세션에 한 사용자는 한 번만 참여 가능합니다.
+    PRIMARY KEY (session_id, user_id),                  -- 복합 기본키로 한 세션에 한 사용자는 한 번만 참여 가능합니다.
     FOREIGN KEY (session_id) REFERENCES game_session(session_id)
 );
 
@@ -110,7 +110,7 @@ DROP TABLE IF EXISTS reaction_result;
 CREATE TABLE reaction_result (
     result_id    BIGINT PRIMARY KEY AUTO_INCREMENT,     -- 결과의 고유 식별자입니다.
     round_id     BIGINT NOT NULL,                       -- 이 결과가 속한 라운드의 ID입니다.
-    user_uid     VARCHAR(100) NOT NULL,                 -- 결과를 제출한 사용자의 ID입니다.
+    user_id      BIGINT NOT NULL,                       -- 결과를 제출한 사용자의 ID입니다. (users 테이블 참조)
     clicked_at   TIMESTAMP NULL,                        -- 사용자가 클릭한 시각입니다.
     delta_ms     INT NULL,                              -- 빨강 신호 이후 반응 시간(ms), false_start시 NULL
     false_start  BOOLEAN NOT NULL DEFAULT FALSE,        -- 빨강 신호 전에 클릭했는지 여부

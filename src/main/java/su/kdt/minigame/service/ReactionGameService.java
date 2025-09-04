@@ -42,13 +42,13 @@ public class ReactionGameService {
     private final su.kdt.minigame.util.PinUtil pinUtil;
     
     private final Map<Long, ScheduledFuture<?>> scheduledTasks = new HashMap<>();
-    private final Map<Long, List<String>> readyPlayers = new HashMap<>(); // sessionId -> List of ready userUids
+    private final Map<Long, List<Long>> readyPlayers = new HashMap<>(); // sessionId -> List of ready userIds
 
-    public SessionResp createReactionSession(CreateSessionReq request, String userUid, Penalty selectedPenalty) {
+    public SessionResp createReactionSession(CreateSessionReq request, Long userId, Penalty selectedPenalty) {
         GameSession session = new GameSession(
             request.appointmentId(),
             GameSession.GameType.valueOf(request.gameType()),
-            userUid,
+            userId,
             selectedPenalty.getPenaltyId(),
             selectedPenalty.getText(),
             1, // totalRounds = 1 for reaction games (single round per session)
@@ -66,7 +66,7 @@ public class ReactionGameService {
         session = gameRepo.save(session);
         
         // Create host as first member of the session
-        GameSessionMember hostMember = new GameSessionMember(session.getId(), userUid);
+        GameSessionMember hostMember = new GameSessionMember(session.getId(), userId);
         memberRepo.save(hostMember);
         
         return SessionResp.from(session);
@@ -162,19 +162,19 @@ public class ReactionGameService {
     }
     
 
-    public ReactionResult registerSessionClick(Long sessionId, String userUid) {
-        log.info("[REACTION-CLICK] Session-based click: sessionId={}, userUid={}", sessionId, userUid);
+    public ReactionResult registerSessionClick(Long sessionId, Long userId) {
+        log.info("[REACTION-CLICK] Session-based click: sessionId={}, userId={}", sessionId, userId);
         
         // 세션 기반 단판 게임에서는 세션 ID를 결과 저장에 직접 사용
-        Optional<ReactionResult> existingResult = reactionResultRepo.findBySessionIdAndUserUid(sessionId, userUid);
+        Optional<ReactionResult> existingResult = reactionResultRepo.findBySessionIdAndUserId(sessionId, userId);
         
         if (existingResult.isPresent()) {
-            log.warn("[REACTION-CLICK] User {} already clicked for session {}", userUid, sessionId);
+            log.warn("[REACTION-CLICK] User {} already clicked for session {}", userId, sessionId);
             return existingResult.get(); // 중복 클릭 방지
         }
         
         // 새로운 결과 생성 (세션 기반)
-        ReactionResult result = new ReactionResult(sessionId, userUid);
+        ReactionResult result = new ReactionResult(sessionId, userId);
         Instant clickTime = Instant.now();
         
         // 단판 게임이므로 즉시 결과 계산 (간단한 랜덤 지연시간)
@@ -186,8 +186,8 @@ public class ReactionGameService {
         // 모든 플레이어가 클릭했는지 확인하고 순위 계산
         checkAndCalculateRanks(sessionId);
         
-        log.info("[REACTION-CLICK] Click registered: sessionId={}, userUid={}, deltaMs={}ms", 
-                sessionId, userUid, deltaMs);
+        log.info("[REACTION-CLICK] Click registered: sessionId={}, userId={}, deltaMs={}ms", 
+                sessionId, userId, deltaMs);
         
         return saved;
     }
@@ -235,12 +235,12 @@ public class ReactionGameService {
             .filter(r -> !r.getFalseStart())
             .sorted((a, b) -> {
                 if (a.getDeltaMs() == null && b.getDeltaMs() == null) {
-                    return a.getUserUid().compareTo(b.getUserUid());
+                    return a.getUserId().compareTo(b.getUserId());
                 }
                 if (a.getDeltaMs() == null) return 1;
                 if (b.getDeltaMs() == null) return -1;
                 int deltaCompare = a.getDeltaMs().compareTo(b.getDeltaMs());
-                return deltaCompare != 0 ? deltaCompare : a.getUserUid().compareTo(b.getUserUid());
+                return deltaCompare != 0 ? deltaCompare : a.getUserId().compareTo(b.getUserId());
             })
             .toList();
 
@@ -251,7 +251,7 @@ public class ReactionGameService {
         // False start 사용자들 하위 순위 매기기
         List<ReactionResult> falseStarts = results.stream()
             .filter(ReactionResult::getFalseStart)
-            .sorted((a, b) -> a.getUserUid().compareTo(b.getUserUid()))
+            .sorted((a, b) -> a.getUserId().compareTo(b.getUserId()))
             .toList();
 
         int falseStartRank = validClicks.size() + 1;
@@ -284,25 +284,25 @@ public class ReactionGameService {
         }
         
         // 사용자 표시명 조회
-        List<String> userUids = allResults.stream().map(ReactionResult::getUserUid).toList();
-        Map<String, String> displayNameMap = userRepository.findByUidIn(userUids)
-                .stream().collect(java.util.stream.Collectors.toMap(User::getUid, User::getUsername));
+        List<Long> userIds = allResults.stream().map(ReactionResult::getUserId).toList();
+        Map<Long, String> displayNameMap = userRepository.findByIdIn(userIds)
+                .stream().collect(java.util.stream.Collectors.toMap(User::getId, User::getUsername));
         
         // 랭킹 구성
         List<Map<String, Object>> overallRanking = new ArrayList<>();
         for (int i = 0; i < allResults.size(); i++) {
             ReactionResult r = allResults.get(i);
             Map<String, Object> rankData = new HashMap<>();
-            rankData.put("userUid", r.getUserUid());
-            rankData.put("displayName", displayNameMap.getOrDefault(r.getUserUid(), r.getUserUid()));
+            rankData.put("userId", r.getUserId());
+            rankData.put("displayName", displayNameMap.getOrDefault(r.getUserId(), String.valueOf(r.getUserId())));
             rankData.put("deltaMs", r.getDeltaMs() != null ? r.getDeltaMs() : -1);
             rankData.put("falseStart", r.getFalseStart());
             rankData.put("rank", r.getRankOrder() != null ? r.getRankOrder() : i + 1);
             overallRanking.add(rankData);
         }
         
-        String winnerUid = allResults.get(0).getUserUid();
-        String loserUid = allResults.get(allResults.size() - 1).getUserUid();
+        Long winnerUid = allResults.get(0).getUserId();
+        Long loserUid = allResults.get(allResults.size() - 1).getUserId();
         
         // 벌칙 정보 조회
         Map<String, Object> penaltyData = new HashMap<>();
@@ -354,7 +354,7 @@ public class ReactionGameService {
         }
     }
 
-    public ReactionResult registerClick(Long roundId, String userUid) {
+    public ReactionResult registerClick(Long roundId, Long userId) {
         Instant clickTime = Instant.now();
         
         ReactionRound round = reactionRoundRepo.findById(roundId)
@@ -363,13 +363,13 @@ public class ReactionGameService {
         Long sessionId = round.getSessionId();
         
         // 이미 클릭한 사용자인지 확인 (중복 클릭 무시)
-        Optional<ReactionResult> existing = reactionResultRepo.findBySessionIdAndUserUid(sessionId, userUid);
+        Optional<ReactionResult> existing = reactionResultRepo.findBySessionIdAndUserId(sessionId, userId);
         if (existing.isPresent()) {
-            log.info("User {} already clicked for session {}, returning existing result", userUid, sessionId);
+            log.info("User {} already clicked for session {}, returning existing result", userId, sessionId);
             return existing.get();
         }
         
-        ReactionResult result = new ReactionResult(sessionId, userUid);
+        ReactionResult result = new ReactionResult(sessionId, userId);
         
         // FALSE START vs 정상 클릭 판정
         if (round.getRedAt() == null || clickTime.isBefore(round.getRedAt())) {
@@ -413,20 +413,20 @@ public class ReactionGameService {
                     roundId, allMembers.size(), existingResults.size());
             
             // 미제출자들에게 타임아웃 결과 추가 (falseStart가 아닌 timeout으로 처리)
-            Set<String> submittedUids = existingResults.stream()
-                    .map(ReactionResult::getUserUid)
+            Set<Long> submittedUids = existingResults.stream()
+                    .map(ReactionResult::getUserId)
                     .collect(java.util.stream.Collectors.toSet());
             
             for (GameSessionMember member : allMembers) {
-                if (!submittedUids.contains(member.getUserUid())) {
+                if (!submittedUids.contains(member.getUserId())) {
                     try {
-                        ReactionResult missedResult = new ReactionResult(roundId, member.getUserUid());
+                        ReactionResult missedResult = new ReactionResult(roundId, member.getUserId());
                         // 타임아웃은 falseStart가 아니라 반응 시간 없음으로 처리
                         missedResult.recordClick(Instant.now(), null, false); 
                         reactionResultRepo.save(missedResult);
-                        log.debug("[TIMEOUT] Added timeout result for user {} in round {}", member.getUserUid(), roundId);
+                        log.debug("[TIMEOUT] Added timeout result for user {} in round {}", member.getUserId(), roundId);
                     } catch (Exception e) {
-                        log.error("[TIMEOUT] Failed to add timeout result for user {} in round {}", member.getUserUid(), roundId, e);
+                        log.error("[TIMEOUT] Failed to add timeout result for user {} in round {}", member.getUserId(), roundId, e);
                     }
                 }
             }
@@ -494,12 +494,12 @@ public class ReactionGameService {
             .filter(r -> !r.getFalseStart())
             .sorted((a, b) -> {
                 if (a.getDeltaMs() == null && b.getDeltaMs() == null) {
-                    return a.getUserUid().compareTo(b.getUserUid());
+                    return a.getUserId().compareTo(b.getUserId());
                 }
                 if (a.getDeltaMs() == null) return 1;
                 if (b.getDeltaMs() == null) return -1;
                 int deltaCompare = a.getDeltaMs().compareTo(b.getDeltaMs());
-                return deltaCompare != 0 ? deltaCompare : a.getUserUid().compareTo(b.getUserUid());
+                return deltaCompare != 0 ? deltaCompare : a.getUserId().compareTo(b.getUserId());
             })
             .toList();
 
@@ -510,7 +510,7 @@ public class ReactionGameService {
         // False start 사용자들 하위 순위 매기기
         List<ReactionResult> falseStarts = results.stream()
             .filter(ReactionResult::getFalseStart)
-            .sorted((a, b) -> a.getUserUid().compareTo(b.getUserUid()))
+            .sorted((a, b) -> a.getUserId().compareTo(b.getUserId()))
             .toList();
 
         int falseStartRank = validClicks.size() + 1;
@@ -548,11 +548,11 @@ public class ReactionGameService {
             if (a.getFalseStart() && !b.getFalseStart()) return 1;
             if (!a.getFalseStart() && b.getFalseStart()) return -1;
             if (a.getFalseStart() && b.getFalseStart()) {
-                return a.getUserUid().compareTo(b.getUserUid());
+                return a.getUserId().compareTo(b.getUserId());
             }
             // 둘 다 정상 클릭인 경우 deltaMs 비교
             if (a.getDeltaMs() == null && b.getDeltaMs() == null) {
-                return a.getUserUid().compareTo(b.getUserUid());
+                return a.getUserId().compareTo(b.getUserId());
             }
             if (a.getDeltaMs() == null) return 1;
             if (b.getDeltaMs() == null) return -1;
@@ -560,25 +560,25 @@ public class ReactionGameService {
         });
         
         // 사용자 표시명 조회
-        List<String> userUids = allResults.stream().map(ReactionResult::getUserUid).toList();
-        Map<String, String> displayNameMap = userRepository.findByUidIn(userUids)
-                .stream().collect(java.util.stream.Collectors.toMap(User::getUid, User::getUsername));
+        List<Long> userIds = allResults.stream().map(ReactionResult::getUserId).toList();
+        Map<Long, String> displayNameMap = userRepository.findByIdIn(userIds)
+                .stream().collect(java.util.stream.Collectors.toMap(User::getId, User::getUsername));
         
         // 랭크 계산
         List<Map<String, Object>> overallRanking = new ArrayList<>();
         for (int i = 0; i < allResults.size(); i++) {
             ReactionResult r = allResults.get(i);
             Map<String, Object> rankData = new HashMap<>();
-            rankData.put("userUid", r.getUserUid());
-            rankData.put("displayName", displayNameMap.getOrDefault(r.getUserUid(), r.getUserUid()));
+            rankData.put("userId", r.getUserId());
+            rankData.put("displayName", displayNameMap.getOrDefault(r.getUserId(), String.valueOf(r.getUserId())));
             rankData.put("deltaMs", r.getDeltaMs() != null ? r.getDeltaMs() : -1);
             rankData.put("falseStart", r.getFalseStart());
             rankData.put("rank", i + 1);
             overallRanking.add(rankData);
         }
         
-        String winnerUid = allResults.get(0).getUserUid();
-        String loserUid = allResults.get(allResults.size() - 1).getUserUid();
+        Long winnerUid = allResults.get(0).getUserId();
+        Long loserUid = allResults.get(allResults.size() - 1).getUserId();
         
         // 벌칙 정보 조회 (세션에 저장된 값 사용)
         GameSession session = gameRepo.findById(sessionId).orElse(null);
@@ -695,9 +695,9 @@ public class ReactionGameService {
                 log.info("[CURRENT-ROUND] Session {} found active round {} status {}", sessionId, currentRound.getRoundId(), currentRound.getStatus());
                 return currentRound;
             } else {
-                // IN_PROGRESS인데 활성 라운드가 없으면 생성해서 반환 (204 최소화)
-                log.warn("[CURRENT-ROUND] Session {} IN_PROGRESS but no active round, creating one", sessionId);
-                return ensureActiveRound(sessionId);
+                // IN_PROGRESS인데 활성 라운드가 없으면 null 반환 (자동 생성 금지)
+                log.info("[CURRENT-ROUND] Session {} IN_PROGRESS but no active round - host must start next round", sessionId);
+                return null;
             }
         }
         
@@ -822,10 +822,10 @@ public class ReactionGameService {
             if (a.getFalseStart() && !b.getFalseStart()) return 1;
             if (!a.getFalseStart() && b.getFalseStart()) return -1;
             if (a.getFalseStart() && b.getFalseStart()) {
-                return a.getUserUid().compareTo(b.getUserUid());
+                return a.getUserId().compareTo(b.getUserId());
             }
             if (a.getDeltaMs() == null && b.getDeltaMs() == null) {
-                return a.getUserUid().compareTo(b.getUserUid());
+                return a.getUserId().compareTo(b.getUserId());
             }
             if (a.getDeltaMs() == null) return 1;
             if (b.getDeltaMs() == null) return -1;
@@ -833,17 +833,17 @@ public class ReactionGameService {
         });
         
         // 사용자 정보 조회
-        List<String> userUids = allResults.stream().map(ReactionResult::getUserUid).toList();
-        Map<String, String> displayNameMap = userRepository.findByUidIn(userUids)
-                .stream().collect(java.util.stream.Collectors.toMap(User::getUid, User::getUsername));
+        List<Long> userIds = allResults.stream().map(ReactionResult::getUserId).toList();
+        Map<Long, String> displayNameMap = userRepository.findByIdIn(userIds)
+                .stream().collect(java.util.stream.Collectors.toMap(User::getId, User::getUsername));
         
         // 결과 구성
         List<Map<String, Object>> overallRanking = new ArrayList<>();
         for (int i = 0; i < allResults.size(); i++) {
             ReactionResult r = allResults.get(i);
             Map<String, Object> rankData = new HashMap<>();
-            rankData.put("userUid", r.getUserUid());
-            rankData.put("displayName", displayNameMap.getOrDefault(r.getUserUid(), r.getUserUid()));
+            rankData.put("userId", r.getUserId());
+            rankData.put("displayName", displayNameMap.getOrDefault(r.getUserId(), String.valueOf(r.getUserId())));
             rankData.put("deltaMs", r.getDeltaMs() != null ? r.getDeltaMs() : -1);
             rankData.put("falseStart", r.getFalseStart());
             rankData.put("rank", i + 1);
@@ -860,8 +860,8 @@ public class ReactionGameService {
         return Map.of(
             "sessionId", sessionId,
             "overallRanking", overallRanking,
-            "winnerUid", allResults.get(0).getUserUid(),
-            "loserUid", allResults.get(allResults.size() - 1).getUserUid(),
+            "winnerUid", allResults.get(0).getUserId(),
+            "loserUid", allResults.get(allResults.size() - 1).getUserId(),
             "penalty", penaltyData
         );
     }
@@ -869,8 +869,8 @@ public class ReactionGameService {
     /**
      * HTTP 동기화 엔드포인트용 안전한 상태 동기화
      */
-    public Map<String, Object> syncGameState(Long sessionId, String userUid) {
-        log.info("[SYNC] Sync request from user {} for session {}", userUid, sessionId);
+    public Map<String, Object> syncGameState(Long sessionId, Long userId) {
+        log.info("[SYNC] Sync request from user {} for session {}", userId, sessionId);
         
         GameSession session = gameRepo.findById(sessionId).orElseThrow(
             () -> new IllegalArgumentException("Session not found: " + sessionId)
@@ -888,9 +888,9 @@ public class ReactionGameService {
         }
         
         // 미참가 사용자 처리
-        GameSessionMember member = memberRepo.findBySessionIdAndUserUid(sessionId, userUid).orElse(null);
+        GameSessionMember member = memberRepo.findBySessionIdAndUserId(sessionId, userId).orElse(null);
         if (member == null) {
-            log.warn("[SYNC] User {} is not a participant in session {}", userUid, sessionId);
+            log.warn("[SYNC] User {} is not a participant in session {}", userId, sessionId);
             return Map.of(
                 "state", "ERROR",
                 "sessionId", sessionId,
@@ -962,8 +962,8 @@ public class ReactionGameService {
                 "sessionId", sessionId,
                 "status", session.getStatus().name(),
                 "players", members.stream().map(m -> Map.of(
-                        "uid", m.getUserUid(),
-                        "name", m.getUserUid().substring(0, Math.min(8, m.getUserUid().length())),
+                        "uid", m.getUserId(),
+                        "name", String.valueOf(m.getUserId()).substring(0, Math.min(8, String.valueOf(m.getUserId()).length())),
                         "isReady", m.isReady()
                 )).toList(),
                 "total", members.size()
@@ -1010,7 +1010,7 @@ public class ReactionGameService {
      * 플레이어가 게임 페이지에 도착했음을 표시하고 모든 플레이어가 준비되면 게임 시작
      */
     @Transactional
-    public Map<String, Object> markPlayerReady(Long sessionId, String userUid, boolean ready) {
+    public Map<String, Object> markPlayerReady(Long sessionId, Long userId, boolean ready) {
         GameSession session = gameRepo.findById(sessionId)
                 .orElseThrow(() -> new IllegalArgumentException("Session not found"));
         
@@ -1021,25 +1021,25 @@ public class ReactionGameService {
         
         // 해당 세션의 멤버인지 확인
         boolean isMember = memberRepo.findBySessionId(sessionId).stream()
-                .anyMatch(member -> member.getUserUid().equals(userUid));
+                .anyMatch(member -> member.getUserId().equals(userId));
         
         if (!isMember) {
             throw new IllegalArgumentException("User is not a member of this session");
         }
         
         // Ready 플레이어 목록 업데이트 (in-memory와 database 동기화)
-        List<String> currentReadyPlayers = readyPlayers.computeIfAbsent(sessionId, k -> new ArrayList<>());
+        List<Long> currentReadyPlayers = readyPlayers.computeIfAbsent(sessionId, k -> new ArrayList<>());
         
         if (ready) {
-            if (!currentReadyPlayers.contains(userUid)) {
-                currentReadyPlayers.add(userUid);
+            if (!currentReadyPlayers.contains(userId)) {
+                currentReadyPlayers.add(userId);
             }
         } else {
-            currentReadyPlayers.remove(userUid);
+            currentReadyPlayers.remove(userId);
         }
         
         // 🔧 데이터베이스의 GameSessionMember.isReady 필드도 업데이트
-        GameSessionMember member = memberRepo.findBySessionIdAndUserUid(sessionId, userUid)
+        GameSessionMember member = memberRepo.findBySessionIdAndUserId(sessionId, userId)
                 .orElseThrow(() -> new IllegalArgumentException("Member not found"));
         member.setReady(ready);
         memberRepo.save(member);
@@ -1047,7 +1047,7 @@ public class ReactionGameService {
         int totalMembers = (int) memberRepo.countBySessionId(sessionId);
         
         log.info("[REACTION] Player {} marked as {} for session {}. Ready: {}/{}", 
-                userUid, ready ? "ready" : "unready", sessionId, currentReadyPlayers.size(), totalMembers);
+                userId, ready ? "ready" : "unready", sessionId, currentReadyPlayers.size(), totalMembers);
         
         // Ready 상태를 모든 클라이언트에 브로드캐스트
         Map<String, Object> readyStatus = Map.of(
@@ -1071,15 +1071,15 @@ public class ReactionGameService {
      * 플레이어가 게임 페이지에 도착했음을 표시
      */
     @Transactional
-    public void markArrived(Long sessionId, String userUid) {
-        markPlayerReady(sessionId, userUid, true);
+    public void markArrived(Long sessionId, Long userId) {
+        markPlayerReady(sessionId, userId, true);
     }
 
     /**
      * 도착한 플레이어 수 반환
      */
     public int countArrived(Long sessionId) {
-        List<String> currentReadyPlayers = readyPlayers.getOrDefault(sessionId, new ArrayList<>());
+        List<Long> currentReadyPlayers = readyPlayers.getOrDefault(sessionId, new ArrayList<>());
         return currentReadyPlayers.size();
     }
 

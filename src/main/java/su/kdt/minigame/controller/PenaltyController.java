@@ -37,12 +37,15 @@ public class PenaltyController {
                                              HttpServletRequest request) {
         String uid = (String) request.getAttribute(UidResolverFilter.ATTR_UID);
         // 유저가 null일 경우 system 벌칙으로 저장
-        if (uid == null) {
-            uid = "system";
+        Long userId;
+        if (uid == null || "system".equals(uid)) {
+            userId = 0L; // system user ID
+        } else {
+            userId = Long.valueOf(uid);
         }
         
         try {
-            Penalty p = penaltyService.create(uid, dto.description());
+            Penalty p = penaltyService.create(userId, dto.description());
             return ResponseEntity.status(HttpStatus.CREATED).body(PenaltyDto.from(p));
         } catch (Exception e) {
             throw new IllegalArgumentException("벌칙 생성에 실패했습니다: " + e.getMessage());
@@ -75,8 +78,9 @@ public class PenaltyController {
             @PathVariable Long penaltyId,
             @RequestBody UpdatePenaltyReq req
     ) {
-        String userUid = (String) httpRequest.getAttribute(UidResolverFilter.ATTR_UID);
-        penaltyService.updatePenalty(penaltyId, req.description(), userUid);
+        String userUidStr = (String) httpRequest.getAttribute(UidResolverFilter.ATTR_UID);
+        Long userId = Long.valueOf(userUidStr);
+        penaltyService.updatePenalty(penaltyId, req.description(), userId);
         return ResponseEntity.ok().build();
     }
 
@@ -88,8 +92,9 @@ public class PenaltyController {
             HttpServletRequest httpRequest,
             @PathVariable Long penaltyId
     ) {
-        String userUid = (String) httpRequest.getAttribute(UidResolverFilter.ATTR_UID);
-        penaltyService.deletePenalty(penaltyId, userUid);
+        String userUidStr = (String) httpRequest.getAttribute(UidResolverFilter.ATTR_UID);
+        Long userId = Long.valueOf(userUidStr);
+        penaltyService.deletePenalty(penaltyId, userId);
         return ResponseEntity.noContent().build();
     }
 }

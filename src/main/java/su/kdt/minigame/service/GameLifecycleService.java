@@ -260,11 +260,11 @@ public class GameLifecycleService {
             
             // 🚀 퀴즈 게임인 경우 첫 번째 라운드를 같은 트랜잭션에서 즉시 생성
             if (session.getGameType() == GameSession.GameType.QUIZ) {
-                final String category = session.getCategory() != null ? session.getCategory() : "GENERAL";
+                final String category = session.getCategory() != null ? session.getCategory() : "상식";
                 try {
-                    log.info("[LIFECYCLE] ⚡ Creating first quiz round atomically for session {} with category {}", sessionId, category);
-                    quizService.startRound(sessionId, category);
-                    log.info("[LIFECYCLE] ✅ First quiz round created atomically for session {} with category {}", sessionId, category);
+                    log.info("[LIFECYCLE] ⚡ Pre-generating ALL quiz rounds for session {} with category {}", sessionId, category);
+                    quizService.createAllRounds(sessionId, category);
+                    log.info("[LIFECYCLE] ✅ ALL quiz rounds pre-generated successfully for session {} with category {}", sessionId, category);
                 } catch (org.springframework.dao.DataIntegrityViolationException e) {
                     // 🔒 중복 라운드 생성 시도 → 멱등성 처리
                     log.warn("[LIFECYCLE] ⚠️ Duplicate round creation detected for session {} - proceeding as idempotent success", sessionId);

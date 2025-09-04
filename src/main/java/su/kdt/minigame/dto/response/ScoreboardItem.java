@@ -10,6 +10,8 @@ public record ScoreboardItem(
     int totalAnswered, // 총 답변 개수
     int rank           // 현재 순위 (1등부터)
 ) {
+    // Backward compatibility method
+    public String userId() { return userUid; }
     /**
      * 기본 생성자 - 빈 점수로 초기화
      */

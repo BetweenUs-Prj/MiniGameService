@@ -25,8 +25,8 @@ public class GameSession {
     @Column(name = "appointment_id")
     private Long appointmentId;
 
-    @Column(name = "host_uid", nullable = false)
-    private String hostUid;
+    @Column(name = "host_id", nullable = false)
+    private Long hostId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "game_type", nullable = false)
@@ -65,10 +65,10 @@ public class GameSession {
     private String pinHash;
 
     // 생성자에서 totalRounds와 category를 받도록 수정
-    public GameSession(Long appointmentId, GameType gameType, String hostUid, Long selectedPenaltyId, String penaltyText, Integer totalRounds, String category) {
+    public GameSession(Long appointmentId, GameType gameType, Long hostId, Long selectedPenaltyId, String penaltyText, Integer totalRounds, String category) {
         this.appointmentId = appointmentId;
         this.gameType = gameType;
-        this.hostUid = hostUid;
+        this.hostId = hostId;
         this.selectedPenaltyId = selectedPenaltyId;
         this.penaltyDescription = penaltyText;
         this.totalRounds = totalRounds;
@@ -113,5 +113,14 @@ public class GameSession {
     
     public String getCategoryEnum() {
         return this.category;
+    }
+    
+    public Long getHostId() {
+        return this.hostId;
+    }
+    
+    // Backward compatibility method
+    public String getHostUid() {
+        return String.valueOf(this.hostId);
     }
 }
