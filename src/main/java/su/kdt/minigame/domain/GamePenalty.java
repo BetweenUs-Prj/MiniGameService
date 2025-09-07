@@ -25,14 +25,14 @@ public class GamePenalty {
     @JoinColumn(name = "penalty_id", nullable = false)
     private Penalty penalty;
 
-    public GamePenalty(GameSession gameSession, String userUid, Penalty penalty) {
-        this.id = new GamePenaltyId(gameSession.getId(), userUid);
+    public GamePenalty(GameSession gameSession, Long userId, Penalty penalty) {
+        this.id = new GamePenaltyId(gameSession.getId(), userId);
         this.gameSession = gameSession;
         this.penalty = penalty;
     }
     
     // 서비스 계층에서 userUid에 쉽게 접근할 수 있도록 Getter를 추가합니다.
-    public String getUserUid() {
-        return this.id.getUserUid();
+    public Long getUserId() {
+        return this.id.getUserId();
     }
 }

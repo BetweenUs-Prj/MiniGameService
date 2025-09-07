@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(/C:\\Users\\82106\\Workspace\\MiniGameService\\src\\main\\java\\su\\kdt\\minigame\\dto\\request/**)",
+      "Read(/C:\\Users\\82106\\Workspace\\MiniGameService\\src\\main\\java\\su\\kdt\\minigame\\controller/**)",
+      "Read(/C:\\Users\\82106\\Workspace\\MiniGameService\\src\\main\\java\\su\\kdt\\minigame\\service/**)",
+      "Read(/C:\\Users\\82106\\Workspace\\MiniGameService\\src\\main\\java\\su\\kdt\\minigame\\service/**)",
+      "Read(/C:\\Users\\82106\\Workspace\\MiniGameService\\src\\main\\java\\su\\kdt\\minigame\\service/**)",
+      "Read(/C:\\Users\\82106\\Workspace\\MiniGameService\\src\\main\\java\\su\\kdt\\minigame\\service/**)",
+      "Read(/C:\\Users\\82106\\Workspace\\MiniGameService\\src\\main\\java\\su\\kdt\\minigame\\service/**)",
+      "Read(/C:\\Users\\82106\\Workspace\\MiniGameService\\src\\main\\java\\su\\kdt\\minigame\\service/**)",
+      "Read(/C:\\Users\\82106\\Workspace\\MiniGameService\\src\\main\\java\\su\\kdt\\minigame\\service/**)",
+      "Read(/C:\\Users\\82106\\Workspace\\MiniGameService\\src\\main\\java\\su\\kdt\\minigame\\service/**)",
+      "Read(/C:\\Users\\82106\\Workspace\\MiniGameService\\src\\main\\java\\su\\kdt\\minigame\\service/**)",
+      "Read(/C:\\Users\\82106\\Workspace\\MiniGameService\\src\\main\\java\\su\\kdt\\minigame\\service/**)",
+      "Read(/C:\\Users\\82106\\Workspace\\MiniGameService\\src\\main\\java\\su\\kdt\\minigame\\domain/**)",
+      "Read(/C:\\Users\\82106\\Workspace\\MiniGameService\\src\\main\\java\\su\\kdt\\minigame\\domain/**)",
+      "Read(/C:\\Users\\82106\\Workspace\\MiniGameService\\src\\main\\java\\su\\kdt\\minigame\\domain/**)",
+      "Read(/C:\\Users\\82106\\Workspace\\MiniGameService\\src\\main\\java\\su\\kdt\\minigame\\controller/**)",
+      "Read(/C:\\Users\\82106\\Workspace\\MiniGameService\\src\\main\\java\\su\\kdt\\minigame\\service/**)",
+      "Read(/C:\\Users\\82106\\Workspace\\MiniGameService\\src\\main\\java\\su\\kdt\\minigame\\controller/**)",
+      "Read(/C:\\Users\\82106\\Workspace\\MiniGameService\\src\\main\\java\\su\\kdt\\minigame\\controller/**)",
+      "Read(/C:\\Users\\82106\\Workspace\\MiniGameService\\src\\main\\java\\su\\kdt\\minigame\\service/**)",
+      "Read(/C:\\Users\\82106\\Workspace\\MiniGameService\\src\\main\\java\\su\\kdt\\minigame\\domain/**)",
+      "Read(/C:\\Users\\82106\\Workspace\\MiniGameService\\src\\main\\java/**)",
+      "Read(/C:\\Users\\82106\\Workspace\\MiniGameService\\src\\main\\java/**)",
+      "Read(/C:\\Users\\82106\\Workspace\\MiniGameService\\src\\main\\java/**)",
+      "Read(/C:\\Users\\82106\\Workspace\\MiniGameService\\src\\main\\java\\su\\kdt\\minigame\\repository/**)",
+      "Read(/C:\\Users\\82106\\Workspace\\MiniGameService\\src\\main\\java\\su\\kdt\\minigame\\repository/**)",
+      "Read(/C:\\Users\\82106\\Workspace\\MiniGameService\\src\\main\\java\\su\\kdt\\minigame\\domain/**)",
+      "Read(/C:\\Users\\82106\\Workspace\\MiniGameService\\src\\main\\java\\su\\kdt\\minigame\\service/**)",
+      "Read(/C:\\Users\\82106\\Workspace\\MiniGameService\\src\\main\\java\\su\\kdt\\minigame\\controller/**)",
+      "Read(/C:\\Users\\82106\\Workspace\\MiniGameService\\src\\main\\java\\su\\kdt\\minigame\\service/**)",
+      "Read(/C:\\Users\\82106\\Workspace\\MiniGameService\\src\\main\\java\\su\\kdt\\minigame\\dto\\response/**)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

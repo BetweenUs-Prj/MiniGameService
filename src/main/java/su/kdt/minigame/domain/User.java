@@ -9,7 +9,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "user")
+@Table(name = "users")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User {
@@ -32,4 +32,8 @@ public class User {
 
     @Column(name = "prefer_criteria")
     private String preferCriteria; // 선호하는 거리산정 기준
+    
+    public Long getId() {
+        return this.kakaoId;
+    }
 }

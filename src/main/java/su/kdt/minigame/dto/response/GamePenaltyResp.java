@@ -10,7 +10,7 @@ public record GamePenaltyResp(
     public static GamePenaltyResp from(GamePenalty gamePenalty) {
         return new GamePenaltyResp(
                 gamePenalty.getGameSession().getId(),
-                gamePenalty.getUserUid(),
+                String.valueOf(gamePenalty.getUserId()),
                 gamePenalty.getPenalty().getDescription()
         );
     }

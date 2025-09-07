@@ -1,26 +1,36 @@
 package su.kdt.minigame.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import su.kdt.minigame.domain.GameSession;
+import org.springframework.data.jpa.repository.Query;
 import su.kdt.minigame.domain.ReactionResult;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface ReactionResultRepo extends JpaRepository<ReactionResult, Long> {
-
-    // ===== 아래 두 메소드를 추가해주세요! =====
-
-    /**
-     * 특정 게임 세션에 속한 모든 결과를 조회합니다.
-     * @param session 조회할 게임 세션
-     * @return 결과 목록
-     */
-    List<ReactionResult> findBySession(GameSession session);
-
-    /**
-     * 특정 게임 세션에 속한 모든 결과를 reactionTime 오름차순(빠른 순)으로 정렬하여 조회합니다.
-     * @param session 조회할 게임 세션
-     * @return 정렬된 결과 목록 (리더보드용)
-     */
-    List<ReactionResult> findBySessionOrderByReactionTimeAsc(GameSession session);
+    
+    // Session-based methods for single-game reaction games
+    @Query("SELECT r FROM ReactionResult r WHERE r.sessionId = :sessionId ORDER BY CASE WHEN r.falseStart = true THEN 1 ELSE 0 END, r.deltaMs ASC, r.userId ASC")
+    List<ReactionResult> findBySessionIdOrderByPerformance(Long sessionId);
+    
+    List<ReactionResult> findBySessionIdOrderByRankOrderAsc(Long sessionId);
+    
+    Optional<ReactionResult> findBySessionIdAndUserId(Long sessionId, Long userId);
+    
+    List<ReactionResult> findBySessionId(Long sessionId);
+    
+    // Legacy round-based methods adapted to session-based storage
+    @Query("SELECT r FROM ReactionResult r WHERE r.sessionId = (SELECT rr.sessionId FROM ReactionRound rr WHERE rr.roundId = :roundId) AND r.userId = :userUid")
+    Optional<ReactionResult> findByRoundIdAndUserId(Long roundId, Long userId);
+    
+    @Query("SELECT r FROM ReactionResult r WHERE r.sessionId = (SELECT rr.sessionId FROM ReactionRound rr WHERE rr.roundId = :roundId) ORDER BY CASE WHEN r.falseStart = true THEN 1 ELSE 0 END, r.deltaMs ASC, r.userId ASC")
+    List<ReactionResult> findByRoundIdOrderByPerformance(Long roundId);
+    
+    @Query("SELECT r FROM ReactionResult r WHERE r.sessionId = (SELECT rr.sessionId FROM ReactionRound rr WHERE rr.roundId = :roundId) ORDER BY r.rankOrder ASC")
+    List<ReactionResult> findByRoundIdOrderByRankOrderAsc(Long roundId);
+    
+    @Query("SELECT r FROM ReactionResult r WHERE r.sessionId IN (SELECT rr.sessionId FROM ReactionRound rr WHERE rr.roundId IN :roundIds)")
+    List<ReactionResult> findByRoundIdIn(List<Long> roundIds);
+    
+    // Note: Compatibility method name already matches above
 }

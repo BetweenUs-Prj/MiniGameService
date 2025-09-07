@@ -4,7 +4,9 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Entity
 @Table(name = "game_session")
@@ -23,8 +25,8 @@ public class GameSession {
     @Column(name = "appointment_id")
     private Long appointmentId;
 
-    @Column(name = "host_uid", nullable = false)
-    private String hostUid;
+    @Column(name = "host_id", nullable = false)
+    private Long hostId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "game_type", nullable = false)
@@ -32,10 +34,14 @@ public class GameSession {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Setter
     private Status status = Status.WAITING;
 
     private LocalDateTime startTime;
     private LocalDateTime endTime;
+    
+    @Setter
+    private Instant startedAt;
 
     @Column(name = "selected_penalty_id")
     private Long selectedPenaltyId;
@@ -43,16 +49,39 @@ public class GameSession {
     @Column(name = "penalty_description")
     private String penaltyDescription;
     
-    @Column(name = "total_rounds")
-    private Integer totalRounds; // ◀◀◀ 퀴즈 문항 수 필드 추가
+    @Column(name = "total_rounds", columnDefinition = "INT DEFAULT 5")
+    private Integer totalRounds;
 
-    // 생성자에서 totalRounds를 받도록 수정
-    public GameSession(Long appointmentId, GameType gameType, String hostUid, Long selectedPenaltyId, Integer totalRounds) {
+    @Column(name = "current_round", columnDefinition = "INT DEFAULT 0")
+    private Integer currentRound = 0;
+
+    @Column(name = "category", length = 50)
+    private String category;
+
+    @Column(name = "is_private", columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private Boolean isPrivate = false;
+
+    @Column(name = "pin_hash")
+    private String pinHash;
+
+    // 생성자에서 totalRounds와 category를 받도록 수정
+    public GameSession(Long appointmentId, GameType gameType, Long hostId, Long selectedPenaltyId, String penaltyText, Integer totalRounds, String category) {
         this.appointmentId = appointmentId;
         this.gameType = gameType;
-        this.hostUid = hostUid;
+        this.hostId = hostId;
         this.selectedPenaltyId = selectedPenaltyId;
+        this.penaltyDescription = penaltyText;
         this.totalRounds = totalRounds;
+        this.category = category;
+        this.currentRound = 0;
+    }
+
+    public void setIsPrivate(boolean isPrivate) {
+        this.isPrivate = isPrivate;
+    }
+
+    public void setPinHash(String pinHash) {
+        this.pinHash = pinHash;
     }
 
     public void start() {
@@ -68,5 +97,30 @@ public class GameSession {
             this.endTime = LocalDateTime.now();
             this.penaltyDescription = penaltyDescription;
         }
+    }
+
+    public void close() {
+        if (this.status == Status.WAITING) {
+            this.status = Status.CANCELLED;
+            this.endTime = LocalDateTime.now();
+        }
+    }
+    
+    public int incAndGetCurrentRound() {
+        this.currentRound++;
+        return this.currentRound;
+    }
+    
+    public String getCategoryEnum() {
+        return this.category;
+    }
+    
+    public Long getHostId() {
+        return this.hostId;
+    }
+    
+    // Backward compatibility method
+    public String getHostUid() {
+        return String.valueOf(this.hostId);
     }
 }
