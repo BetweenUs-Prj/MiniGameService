@@ -1,0 +1,107 @@
+# =========================================
+# MySQL Secret (credentials)
+# =========================================
+apiVersion: v1
+kind: Secret
+metadata:
+  name: db-secret
+  namespace: betweenus
+type: Opaque
+data:
+  # echo -n 'root' | base64 = cm9vdA==
+  MYSQL_USER: cm9vdA==
+  # echo -n 'Root123!' | base64 = Um9vdDEyMyE=
+  MYSQL_PASSWORD: Um9vdDEyMyE=
+  # echo -n 'Root123!' | base64 = Um9vdDEyMyE=
+  MYSQL_ROOT_PASSWORD: Um9vdDEyMyE=
+  # echo -n 'beetween_us_db' | base64 = YmVldHdlZW5fdXNfZGI=
+  MYSQL_DATABASE: YmVldHdlZW5fdXNfZGI=
+
+---
+# =========================================
+# MySQL PersistentVolumeClaim
+# =========================================
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-pvc
+  namespace: betweenus
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+
+---
+# =========================================
+# MySQL Service
+# =========================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+  namespace: betweenus
+spec:
+  selector:
+    app: mysql
+  ports:
+    - port: 3306
+      targetPort: 3306
+  clusterIP: None  # Headless service
+
+---
+# =========================================
+# MySQL Deployment
+# =========================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+  namespace: betweenus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:8.0
+          ports:
+            - containerPort: 3306
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: MYSQL_ROOT_PASSWORD
+            - name: MYSQL_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: MYSQL_DATABASE
+          volumeMounts:
+            - name: mysql-storage
+              mountPath: /var/lib/mysql
+            - name: init-sql
+              mountPath: /docker-entrypoint-initdb.d
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "500m"
+      volumes:
+        - name: mysql-storage
+          persistentVolumeClaim:
+            claimName: mysql-pvc
+        - name: init-sql
+          configMap:
+            name: mysql-init-sql
+            optional: true
