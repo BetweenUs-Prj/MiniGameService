@@ -45,7 +45,7 @@ spec:
     spec:
       containers:
         - name: app
-          image: minigame-service:0.1.29-flyway-fix   # ← Fixed Flyway circular dependency issue
+          image: minigame-service:15-0c40ed7   # Updated by Jenkins CI
           ports:
             - containerPort: 8084
           env:
