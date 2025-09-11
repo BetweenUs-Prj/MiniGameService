@@ -29,13 +29,32 @@ public interface PenaltyRepository extends JpaRepository<Penalty, Long> {
     
     // Backward compatibility methods (String-based user IDs)
     default List<Penalty> findByUserUid(String userUid) {
-        Long userId = "system".equals(userUid) ? 0L : Long.valueOf(userUid);
-        return findByUserId(userId);
+        if ("system".equals(userUid) || userUid == null) {
+            return findByUserId(0L);
+        }
+        try {
+            Long userId = Long.valueOf(userUid);
+            return findByUserId(userId);
+        } catch (NumberFormatException e) {
+            // If userUid is not numeric, treat as system penalty
+            return findByUserId(0L);
+        }
     }
     
     default List<Penalty> findByUserUidOrUserUid(String userUid1, String userUid2) {
-        Long userId1 = "system".equals(userUid1) ? 0L : Long.valueOf(userUid1);
-        Long userId2 = "system".equals(userUid2) ? 0L : Long.valueOf(userUid2);
+        Long userId1 = parseUserUid(userUid1);
+        Long userId2 = parseUserUid(userUid2);
         return findByUserIdOrUserId(userId1, userId2);
+    }
+    
+    private Long parseUserUid(String userUid) {
+        if ("system".equals(userUid) || userUid == null) {
+            return 0L;
+        }
+        try {
+            return Long.valueOf(userUid);
+        } catch (NumberFormatException e) {
+            return 0L;
+        }
     }
 }

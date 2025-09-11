@@ -25,7 +25,8 @@ public class WebConfig implements WebMvcConfigurer {
                     "X-Request-ID", 
                     "X-Response-Time",
                     "Access-Control-Allow-Origin",
-                    "Access-Control-Allow-Credentials"
+                    "Access-Control-Allow-Credentials",
+                    "x-round-phase"
                 ) // 타임아웃 재시도 시 필요한 헤더들
                 .allowCredentials(true)
                 .maxAge(7200); // SecurityConfig와 동일하게 2시간

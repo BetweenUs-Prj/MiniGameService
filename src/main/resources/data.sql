@@ -1,10 +1,10 @@
 -- 기본 벌칙 데이터 (테스트용) - AUTO_INCREMENT 충돌 방지를 위해 ID 제거
-INSERT INTO penalty (user_uid, penalty_text, created_at) VALUES 
-('system', '커피 한 잔 사기', CURRENT_TIMESTAMP),
-('system', '아이스크림 사기', CURRENT_TIMESTAMP),
-('system', '치킨 한 마리 사기', CURRENT_TIMESTAMP),
-('system', '노래 한 곡 부르기', CURRENT_TIMESTAMP),
-('system', '댄스 한 곡 추기', CURRENT_TIMESTAMP);
+INSERT INTO penalty (user_id, penalty_text, created_at) VALUES 
+(1, '커피 한 잔 사기', CURRENT_TIMESTAMP),
+(1, '아이스크림 사기', CURRENT_TIMESTAMP),
+(1, '치킨 한 마리 사기', CURRENT_TIMESTAMP),
+(1, '노래 한 곡 부르기', CURRENT_TIMESTAMP),
+(1, '댄스 한 곡 추기', CURRENT_TIMESTAMP);
 
 -- 샘플 퀴즈 문제들
 -- 상식 퀴즈

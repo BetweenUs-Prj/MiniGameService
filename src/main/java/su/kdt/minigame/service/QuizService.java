@@ -158,7 +158,17 @@ public class QuizService {
         // [VALIDATION 2] Round not closed
         if (round.getEndedAt() != null) {
             log.warn("[QUIZ] Round already closed - roundId: {}, endedAt: {}", roundId, round.getEndedAt());
-            throw new IllegalStateException("Round already closed");
+            // 라운드 정보를 가져와서 RoundGoneException으로 던짐
+            List<GameSessionMember> activeMembers = memberRepo.findBySessionId(round.getSessionId());
+            int totalPlayers = activeMembers.size();
+            long answeredPlayers = answerRepo.countDistinctUserUidsByRound(round);
+            throw new su.kdt.minigame.exception.RoundGoneException(
+                round.getSessionId(), 
+                roundId, 
+                "FINISHED", 
+                (int) answeredPlayers, 
+                totalPlayers
+            );
         }
         
         // [VALIDATION 3] Session ID match (if provided in request)
@@ -254,21 +264,31 @@ public class QuizService {
                     log.info("[SCOREBOARD-PUB] sid={}, reason=GAME_END", session.getId());
                     afterCommit(() -> broadcastScoreboard(session.getId()));
                 } else {
-                    log.info("[QUIZ] Creating next round immediately - all players answered, completed round {}/{}", round.getRoundNo(), session.getTotalRounds());
+                    log.info("[QUIZ] Will create next round after commit - all players answered, completed round {}/{}", round.getRoundNo(), session.getTotalRounds());
                     
-                    // 🔥 [NEXT-ROUND] 로그 추가
-                    log.info("[NEXT-ROUND] sid={}, from={}, to={}, isLast=false", 
+                    // 🔥 [NEXT-ROUND] afterCommit 사용 - 트랜잭션 커밋 후 다음 라운드 생성
+                    log.info("[NEXT-ROUND] Scheduling next round: sid={}, from={}, to={}, isLast=false", 
                         round.getSessionId(), round.getRoundNo(), round.getRoundNo() + 1);
                     
-                    // 🔥 FIX: 트랜잭션적으로 즉시 다음 라운드 생성 - 현재 라운드가 이미 종료되었으므로 active check 통과
-                    try {
-                        startRoundForSession(round.getSessionId());
-                        log.info("[NEXT-ROUND] created=SUCCESS for session: {}", round.getSessionId());
-                    } catch (Exception e) {
-                        log.error("[NEXT-ROUND] created=FAILED, fallback to scheduling: {}", e.getMessage(), e);
-                        // 즉시 실행 실패 시 스케줄링으로 폴백
-                        scheduleNextRound(round.getSessionId());
-                    }
+                    // afterCommit 사용 - 트랜잭션 커밋 후 다음 라운드 직접 생성
+                    final Long sessionIdFinal = round.getSessionId();
+                    afterCommit(() -> {
+                        try {
+                            log.info("[AFTER-COMMIT] Creating next round for session: {}", sessionIdFinal);
+                            startRoundForSession(sessionIdFinal);
+                            log.info("[AFTER-COMMIT] Successfully created next round for session: {}", sessionIdFinal);
+                        } catch (Exception e) {
+                            log.warn("[AFTER-COMMIT] Failed to start next round: sessionId={}, error={}, will retry with scheduler", 
+                                    sessionIdFinal, e.getMessage());
+                            try {
+                                scheduleNextRound(sessionIdFinal);
+                            } catch (Exception retryError) {
+                                log.error("[AFTER-COMMIT] Failed to schedule next round as fallback: sessionId={}, error={}", 
+                                        sessionIdFinal, retryError.getMessage());
+                            }
+                        }
+                    });
+                    log.info("[NEXT-ROUND] Next round scheduled for session: {}", round.getSessionId());
                 }
             } catch (Exception e) {
                 log.error("[QUIZ] Error during round progression for session {}: {}", round.getSessionId(), e.getMessage(), e);
@@ -667,7 +687,7 @@ public class QuizService {
     /**
      * 다음 라운드를 스케줄링합니다. (3초 뒤레이 적용)
      */
-    private void scheduleNextRound(Long sessionId) {
+    public void scheduleNextRound(Long sessionId) {
         try {
             log.info("[NEXT-ROUND] Scheduling next round via delay for session: {} (1s delay)", sessionId);
             
@@ -1032,10 +1052,17 @@ public class QuizService {
                 return null;
             }
 
-            // 가장 최근 라운드 중에서 아직 만료되지 않은 것 찾기
+            // 현재 시간 기준으로 활성화된 라운드 찾기 (시작 시간이 지났고, 종료되지 않은 라운드)
             QuizRound currentRound = null;
+            java.time.LocalDateTime now = java.time.LocalDateTime.now();
+            
             for (QuizRound round : activeRounds) {
-                if (round.getExpiresAt() != null && round.getExpiresAt().isAfter(java.time.LocalDateTime.now())) {
+                // 1. 시작 시간이 현재보다 이전이어야 함 (이미 시작된 라운드)
+                // 2. 종료되지 않았어야 함 (endedAt이 null)
+                // 3. 만료되지 않았어야 함 (expiresAt이 현재보다 미래)
+                if (round.getStartsAt() != null && round.getStartsAt().isBefore(now) &&
+                    round.getEndedAt() == null &&
+                    round.getExpiresAt() != null && round.getExpiresAt().isAfter(now)) {
                     currentRound = round;
                     break;
                 }
@@ -1223,7 +1250,12 @@ public class QuizService {
             long currentRoundCount = roundRepo.countBySessionId(round.getSessionId());
             if (session.getTotalRounds() != null && currentRoundCount >= session.getTotalRounds()) {
                 log.info("[QUIZ] Game ending due to timeout - total rounds completed: {}", currentRoundCount);
+                log.info("[GAME-COMPLETE] 🎯 Starting game completion for session: {} (TIMEOUT)", session.getId());
+                session.finish("Quiz game completed due to timeout");
+                gameRepo.save(session);
+                log.info("[GAME-COMPLETE] ✅ Session finished and saved: {} (TIMEOUT)", session.getId());
                 assignQuizPenalty(session);
+                log.info("[GAME-COMPLETE] 🏆 Quiz penalty assigned for session: {} (TIMEOUT)", session.getId());
             } else {
                 log.info("[QUIZ] Starting next round due to timeout - current: {}/{}", currentRoundCount, session.getTotalRounds());
                 scheduleNextRound(round.getSessionId());
@@ -1393,6 +1425,9 @@ public class QuizService {
         long answeredPlayers = answerRepo.countDistinctUserUidsByRound(round);
         boolean allSubmitted = (totalPlayers > 0 && answeredPlayers >= totalPlayers);
         
+        log.info("[QUIZ-IDEM] Round completion check: sessionId={}, roundId={}, totalPlayers={}, answeredPlayers={}, allSubmitted={}", 
+            sessionId, roundId, totalPlayers, answeredPlayers, allSubmitted);
+        
         if (allSubmitted) {
             round.endRound();
             roundRepo.save(round);
@@ -1400,19 +1435,43 @@ public class QuizService {
             // Check if this was the last round
             GameSession session = gameRepo.findById(sessionId).orElse(null);
             if (session != null) {
-                List<QuizRound> allRounds = roundRepo.findBySessionId(sessionId);
-                if (allRounds.size() >= session.getTotalRounds()) {
+                // 현재 라운드 번호로 게임 완료 체크 (pre-created rounds 문제 해결)
+                int currentRoundNo = round.getRoundNo();
+                boolean isLastRound = currentRoundNo >= session.getTotalRounds();
+                log.info("[QUIZ-IDEM] Game completion check: sessionId={}, currentRoundNo={}, totalRounds={}, isLastRound={}", 
+                    sessionId, currentRoundNo, session.getTotalRounds(), isLastRound);
+                if (isLastRound) {
                     // Game finished
+                    log.info("[GAME-COMPLETE] 🎯 Starting game completion for session: {}", sessionId);
                     session.finish("Quiz game completed");
                     gameRepo.save(session);
+                    log.info("[GAME-COMPLETE] ✅ Session finished and saved: {}", sessionId);
                     assignQuizPenalty(session);
+                    log.info("[GAME-COMPLETE] 🏆 Quiz penalty assigned for session: {}", sessionId);
                 } else {
-                    // Create next round (this could be done asynchronously)
-                    try {
-                        scheduleNextRound(sessionId);
-                    } catch (Exception e) {
-                        log.warn("[QUIZ-IDEM] Failed to create next round: {}", e.getMessage());
-                    }
+                    // 🔥 [NEXT-ROUND] afterCommit 사용 - 트랜잭션 커밋 후 다음 라운드 생성
+                    log.info("[NEXT-ROUND] Scheduling next round: sid={}, from={}, to={}, isLast=false", 
+                        sessionId, round.getRoundNo(), round.getRoundNo() + 1);
+                    
+                    // afterCommit 사용 - 트랜잭션 커밋 후 다음 라운드 직접 생성
+                    final Long sessionIdFinal = sessionId;
+                    afterCommit(() -> {
+                        try {
+                            log.info("[AFTER-COMMIT] Creating next round for session: {}", sessionIdFinal);
+                            startRoundForSession(sessionIdFinal);
+                            log.info("[AFTER-COMMIT] Successfully created next round for session: {}", sessionIdFinal);
+                        } catch (Exception e) {
+                            log.warn("[AFTER-COMMIT] Failed to start next round: sessionId={}, error={}, will retry with scheduler", 
+                                    sessionIdFinal, e.getMessage());
+                            try {
+                                scheduleNextRound(sessionIdFinal);
+                            } catch (Exception retryError) {
+                                log.error("[AFTER-COMMIT] Failed to schedule next round as fallback: sessionId={}, error={}", 
+                                        sessionIdFinal, retryError.getMessage());
+                            }
+                        }
+                    });
+                    log.info("[NEXT-ROUND] Next round scheduled for session: {}", sessionId);
                 }
             }
         }
@@ -1462,13 +1521,8 @@ public class QuizService {
             LocalDateTime startTime = baseTime.plusSeconds(i * 30L);
             LocalDateTime expiresAt = startTime.plusSeconds(30);
             
-            QuizRound round = QuizRound.builder()
-                    .sessionId(sessionId)
-                    .questionId(question.getId())
-                    .roundNo(i + 1)
-                    .startsAt(startTime)
-                    .expiresAt(expiresAt)
-                    .build();
+            // 생성자 기반으로 교체 (엔티티는 QuizQuestion 자체를 받습니다)
+            QuizRound round = new QuizRound(sessionId, i + 1, question, startTime, expiresAt);
             
             round = roundRepo.save(round);
             createdRounds.add(RoundResp.from(round));

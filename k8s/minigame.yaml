@@ -45,7 +45,7 @@ spec:
     spec:
       containers:
         - name: app
-          image: minigame-service:0.1.28-flyway-migration   # ← Added Flyway support and session_id migration
+          image: minigame-service:0.1.29-flyway-fix   # ← Fixed Flyway circular dependency issue
           ports:
             - containerPort: 8084
           env:

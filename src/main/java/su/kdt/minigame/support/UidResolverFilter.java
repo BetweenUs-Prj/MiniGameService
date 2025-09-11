@@ -33,7 +33,7 @@ public class UidResolverFilter extends OncePerRequestFilter {
         String effective = header != null ? header : cookie;
         if (effective == null || effective.isBlank()) {
             // 개발 편의상만 기본값. 운영이라면 400으로 거절하는 것을 권장.
-            effective = "dev-user-001";
+            effective = "1001"; // 숫자 UID로 변경
         }
 
         req.setAttribute(ATTR_UID, effective);

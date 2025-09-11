@@ -165,16 +165,29 @@ public class ReactionGameService {
     public ReactionResult registerSessionClick(Long sessionId, Long userId) {
         log.info("[REACTION-CLICK] Session-based click: sessionId={}, userId={}", sessionId, userId);
         
-        // 세션 기반 단판 게임에서는 세션 ID를 결과 저장에 직접 사용
-        Optional<ReactionResult> existingResult = reactionResultRepo.findBySessionIdAndUserId(sessionId, userId);
-        
-        if (existingResult.isPresent()) {
-            log.warn("[REACTION-CLICK] User {} already clicked for session {}", userId, sessionId);
-            return existingResult.get(); // 중복 클릭 방지
+        // 세션의 라운드들을 조회하여 해당 사용자가 이미 클릭했는지 확인
+        List<ReactionRound> rounds = reactionRoundRepo.findBySessionId(sessionId);
+        if (rounds.isEmpty()) {
+            throw new IllegalStateException("No rounds found for session: " + sessionId);
         }
         
-        // 새로운 결과 생성 (세션 기반)
-        ReactionResult result = new ReactionResult(sessionId, userId);
+        // 모든 라운드에서 해당 사용자의 결과를 확인
+        for (ReactionRound round : rounds) {
+            Optional<ReactionResult> existingResult = reactionResultRepo.findByRoundIdAndUserId(round.getRoundId(), userId);
+            if (existingResult.isPresent()) {
+                log.warn("[REACTION-CLICK] User {} already clicked for session {} in round {}", userId, sessionId, round.getRoundId());
+                return existingResult.get(); // 중복 클릭 방지
+            }
+        }
+        
+        // 현재 활성 라운드 찾기 (가장 최근 라운드 사용)
+        ReactionRound currentRound = rounds.stream()
+            .filter(r -> "WAITING".equals(r.getStatus()) || "PREPARING".equals(r.getStatus()) || "RED".equals(r.getStatus()))
+            .findFirst()
+            .orElse(rounds.get(rounds.size() - 1)); // 활성 라운드가 없으면 마지막 라운드 사용
+        
+        // 새로운 결과 생성 (라운드 기반)
+        ReactionResult result = new ReactionResult(currentRound.getRoundId(), userId);
         Instant clickTime = Instant.now();
         
         // 단판 게임이므로 즉시 결과 계산 (간단한 랜덤 지연시간)
@@ -207,7 +220,28 @@ public class ReactionGameService {
         
         // 세션의 전체 멤버 수 확인
         List<GameSessionMember> allMembers = memberRepo.findBySessionId(sessionId);
-        List<ReactionResult> results = reactionResultRepo.findBySessionIdOrderByPerformance(sessionId);
+        
+        // 세션의 모든 라운드에서 결과 조회
+        List<ReactionRound> rounds = reactionRoundRepo.findBySessionId(sessionId);
+        List<ReactionResult> results = new ArrayList<>();
+        if (!rounds.isEmpty()) {
+            List<Long> roundIds = rounds.stream().map(ReactionRound::getRoundId).toList();
+            results = reactionResultRepo.findByRoundIdIn(roundIds);
+            // 성능 기준으로 정렬 (falseStart 우선, 그 다음 deltaMs)
+            results.sort((a, b) -> {
+                if (a.getFalseStart() && !b.getFalseStart()) return 1;
+                if (!a.getFalseStart() && b.getFalseStart()) return -1;
+                if (a.getFalseStart() && b.getFalseStart()) {
+                    return a.getUserId().compareTo(b.getUserId());
+                }
+                if (a.getDeltaMs() == null && b.getDeltaMs() == null) {
+                    return a.getUserId().compareTo(b.getUserId());
+                }
+                if (a.getDeltaMs() == null) return 1;
+                if (b.getDeltaMs() == null) return -1;
+                return a.getDeltaMs().compareTo(b.getDeltaMs());
+            });
+        }
         
         log.info("[RANK-CALC] Session {} - members: {}, results: {}", 
                 sessionId, allMembers.size(), results.size());
@@ -275,8 +309,27 @@ public class ReactionGameService {
             return;
         }
         
-        // 세션 기반 결과 조회
-        List<ReactionResult> allResults = reactionResultRepo.findBySessionIdOrderByPerformance(sessionId);
+        // 세션의 모든 라운드에서 결과 조회
+        List<ReactionRound> rounds = reactionRoundRepo.findBySessionId(sessionId);
+        List<ReactionResult> allResults = new ArrayList<>();
+        if (!rounds.isEmpty()) {
+            List<Long> roundIds = rounds.stream().map(ReactionRound::getRoundId).toList();
+            allResults = reactionResultRepo.findByRoundIdIn(roundIds);
+            // 성능 기준으로 정렬 (falseStart 우선, 그 다음 deltaMs)
+            allResults.sort((a, b) -> {
+                if (a.getFalseStart() && !b.getFalseStart()) return 1;
+                if (!a.getFalseStart() && b.getFalseStart()) return -1;
+                if (a.getFalseStart() && b.getFalseStart()) {
+                    return a.getUserId().compareTo(b.getUserId());
+                }
+                if (a.getDeltaMs() == null && b.getDeltaMs() == null) {
+                    return a.getUserId().compareTo(b.getUserId());
+                }
+                if (a.getDeltaMs() == null) return 1;
+                if (b.getDeltaMs() == null) return -1;
+                return a.getDeltaMs().compareTo(b.getDeltaMs());
+            });
+        }
         
         if (allResults.isEmpty()) {
             log.warn("[SESSION-FINALIZE] No results found for session {}", sessionId);
@@ -363,13 +416,13 @@ public class ReactionGameService {
         Long sessionId = round.getSessionId();
         
         // 이미 클릭한 사용자인지 확인 (중복 클릭 무시)
-        Optional<ReactionResult> existing = reactionResultRepo.findBySessionIdAndUserId(sessionId, userId);
+        Optional<ReactionResult> existing = reactionResultRepo.findByRoundIdAndUserId(roundId, userId);
         if (existing.isPresent()) {
-            log.info("User {} already clicked for session {}, returning existing result", userId, sessionId);
+            log.info("User {} already clicked for round {}, returning existing result", userId, roundId);
             return existing.get();
         }
         
-        ReactionResult result = new ReactionResult(sessionId, userId);
+        ReactionResult result = new ReactionResult(roundId, userId);
         
         // FALSE START vs 정상 클릭 판정
         if (round.getRedAt() == null || clickTime.isBefore(round.getRedAt())) {
@@ -806,9 +859,9 @@ public class ReactionGameService {
         List<Long> roundIds = rounds.stream().map(ReactionRound::getRoundId).toList();
         log.info("[RESULTS] Round IDs: {}", roundIds);
         
-        // 해당 세션의 모든 라운드 결과를 조회 (실제로는 sessionId 기반으로 조회)
-        List<ReactionResult> allResults = reactionResultRepo.findBySessionIdOrderByPerformance(sessionId);
-        log.info("[RESULTS] Found {} results for session {}", allResults.size(), sessionId);
+        // 해당 세션의 모든 라운드 결과를 조회 (roundIds 기반으로 조회)
+        List<ReactionResult> allResults = reactionResultRepo.findByRoundIdIn(roundIds);
+        log.info("[RESULTS] Found {} results for session {} across {} rounds", allResults.size(), sessionId, roundIds.size());
         
         if (allResults.isEmpty()) {
             log.warn("[RESULTS] No results found - returning empty map for session {}", sessionId);

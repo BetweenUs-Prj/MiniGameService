@@ -21,7 +21,7 @@ public class GameSessionMember {
     @Column(name = "user_id")
     private Long userId;
 
-    @Column(name = "is_ready")
+    @Column(name = "is_ready", columnDefinition = "BIT(1)")
     private Boolean isReady = false;
 
     @Column(name = "joined_at")

@@ -167,6 +167,15 @@ public class GameSessionService {
         // 3. 멤버 이미 존재하면 스냅샷 반환 (재접속) - 멱등성 보장
         Optional<GameSessionMember> existingMember = memberRepo.findBySessionIdAndUserId(sessionId, userId);
         if (existingMember.isPresent()) {
+            GameSessionMember member = existingMember.get();
+            
+            // REACTION 게임의 경우 기존 멤버도 자동으로 ready 상태로 설정
+            if (session.getGameType() == GameSession.GameType.REACTION && !member.isReady()) {
+                member.setReady(true);
+                memberRepo.save(member);
+                log.info("[JOIN] Auto-ready set for existing member in REACTION game - session: {}, user: {}", sessionId, userId);
+            }
+            
             // 이미 참가된 경우 409를 던지지 않고 현재 스냅샷을 반환 (멱등성)
             log.debug("[JOIN] User {} already in session {}, returning existing snapshot", userId, sessionId);
             return lobbyQueryService.getLobbySnapshot(sessionId);
@@ -183,6 +192,13 @@ public class GameSessionService {
         // 6. 멤버 추가 (중복 방지를 위해 try-catch 사용)
         try {
             GameSessionMember newMember = new GameSessionMember(sessionId, userId);
+            
+            // REACTION 게임의 경우 자동으로 ready 상태로 설정
+            if (session.getGameType() == GameSession.GameType.REACTION) {
+                newMember.setReady(true);
+                log.info("[JOIN] Auto-ready set for REACTION game - session: {}, user: {}", sessionId, userId);
+            }
+            
             memberRepo.save(newMember);
             log.debug("[JOIN] Successfully added member {} to session {}", userId, sessionId);
         } catch (Exception e) {

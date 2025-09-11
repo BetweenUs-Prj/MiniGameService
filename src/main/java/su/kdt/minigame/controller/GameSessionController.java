@@ -632,12 +632,12 @@ public class GameSessionController {
                 if (session.getStatus() == GameSession.Status.FINISHED) {
                     log.info("[QUIZ-API] Game finished: sessionId={}", sessionId);
                     return ResponseEntity.noContent()
-                        .header("X-Round-Phase", "FINISHED")
+                        .header("x-round-phase", "FINISHED")
                         .build();
                 } else {
                     log.info("[QUIZ-API] Waiting for next round: sessionId={}", sessionId);
                     return ResponseEntity.noContent()
-                        .header("X-Round-Phase", "WAITING_NEXT")
+                        .header("x-round-phase", "WAITING_NEXT")
                         .build();
                 }
             }

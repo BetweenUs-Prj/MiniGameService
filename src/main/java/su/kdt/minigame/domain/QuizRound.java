@@ -44,6 +44,16 @@ public class QuizRound {
         this.expiresAt = this.startsAt.plusSeconds(30); // 30초 제한
     }
 
+    // 시작/만료 시간을 직접 지정하고 싶을 때 쓰는 생성자
+    public QuizRound(Long sessionId, Integer roundNo, QuizQuestion question,
+                     LocalDateTime startsAt, LocalDateTime expiresAt) {
+        this.sessionId = sessionId;
+        this.roundNo = roundNo;
+        this.question = question;
+        this.startsAt = startsAt;
+        this.expiresAt = expiresAt;
+    }
+
     // Legacy constructor for backward compatibility
     public QuizRound(Long sessionId, QuizQuestion question) {
         this(sessionId, 1, question);

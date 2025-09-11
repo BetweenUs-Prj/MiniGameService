@@ -110,15 +110,15 @@ public class ResultServiceSafe {
     private List<PlayerScore> aggregateFinalScoresSafely(Long sessionId) {
         try {
             String sql = """
-                SELECT a.user_uid AS userUid,
+                SELECT CAST(a.user_id AS CHAR) AS userUid,
                        COALESCE(SUM(a.score), 0) AS totalScore,
                        COALESCE(SUM(CASE WHEN a.is_correct = true THEN 1 ELSE 0 END), 0) AS correctCnt,
                        COUNT(a.answer_id) AS totalAnswers
                 FROM quiz_answer a
                 JOIN quiz_round r ON r.round_id = a.round_id
                 WHERE r.session_id = :sessionId
-                  AND a.user_uid IS NOT NULL
-                GROUP BY a.user_uid
+                  AND a.user_id IS NOT NULL
+                GROUP BY a.user_id
                 """;
             
             Query query = em.createNativeQuery(sql);
@@ -158,7 +158,7 @@ public class ResultServiceSafe {
     private List<PlayerScore> aggregateReactionScoresSafely(Long sessionId) {
         try {
             String sql = """
-                SELECT rr.user_uid AS userUid,
+                SELECT CAST(rr.user_id AS CHAR) AS userUid,
                        COALESCE(SUM(
                          CASE 
                            WHEN rr.false_start = true THEN -10
@@ -173,8 +173,8 @@ public class ResultServiceSafe {
                 FROM reaction_result rr
                 JOIN reaction_round rnd ON rnd.round_id = rr.round_id
                 WHERE rnd.session_id = :sessionId
-                  AND rr.user_uid IS NOT NULL
-                GROUP BY rr.user_uid
+                  AND rr.user_id IS NOT NULL
+                GROUP BY rr.user_id
                 """;
             
             Query query = em.createNativeQuery(sql);
@@ -219,7 +219,7 @@ public class ResultServiceSafe {
             String sql;
             if (session.getGameType() == GameSession.GameType.REACTION) {
                 sql = """
-                    SELECT rr.user_uid AS userUid,
+                    SELECT CAST(rr.user_id AS CHAR) AS userUid,
                            COALESCE(SUM(
                              CASE 
                                WHEN rr.false_start = true THEN -10
@@ -233,20 +233,20 @@ public class ResultServiceSafe {
                     FROM reaction_result rr
                     JOIN reaction_round rnd ON rnd.round_id = rr.round_id
                     WHERE rnd.session_id = :sessionId
-                      AND rr.user_uid IS NOT NULL
-                    GROUP BY rr.user_uid
+                      AND rr.user_id IS NOT NULL
+                    GROUP BY rr.user_id
                     ORDER BY totalScore DESC, correctCnt DESC
                     """;
             } else {
                 sql = """
-                    SELECT a.user_uid AS userUid,
+                    SELECT CAST(a.user_id AS CHAR) AS userUid,
                            COALESCE(SUM(a.score), 0) AS totalScore,
                            COALESCE(SUM(CASE WHEN a.is_correct = true THEN 1 ELSE 0 END), 0) AS correctCnt
                     FROM quiz_answer a
                     JOIN quiz_round r ON r.round_id = a.round_id
                     WHERE r.session_id = :sessionId
-                      AND a.user_uid IS NOT NULL
-                    GROUP BY a.user_uid
+                      AND a.user_id IS NOT NULL
+                    GROUP BY a.user_id
                     ORDER BY totalScore DESC, correctCnt DESC
                     """;
             }
