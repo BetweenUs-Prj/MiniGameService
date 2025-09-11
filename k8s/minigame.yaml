@@ -45,7 +45,7 @@ spec:
     spec:
       containers:
         - name: app
-          image: minigame-service:23-1d9ba93   # Updated by Jenkins CI
+          image: minigame-service:24-673cd6f   # Updated by Jenkins CI
           ports:
             - containerPort: 8084
           env:
