@@ -27,7 +27,7 @@ pipeline {
                     try {
                         sh '''
                             chmod +x gradlew
-                            ./gradlew clean test --no-daemon --stacktrace
+                            ./gradlew clean test --no-daemon --stacktrace -Dspring.profiles.active=ci
                         '''
                     } catch (Exception e) {
                         currentBuild.result = 'UNSTABLE'
