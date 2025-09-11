@@ -64,7 +64,7 @@ pipeline {
                     echo "🔨 Building Docker image: ${FULL_IMAGE_NAME}"
                     
                     sh "docker build -t ${FULL_IMAGE_NAME} ."
-                    sh "minikube image load ${FULL_IMAGE_NAME}"
+                    sh "docker tag ${FULL_IMAGE_NAME} ${FULL_IMAGE_NAME}"
                     
                     echo "✅ Docker image built and loaded to minikube"
                     echo "📦 Ready for deployment via GitOps"
