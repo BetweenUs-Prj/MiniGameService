@@ -85,7 +85,11 @@ pipeline {
                         git config user.name "Jenkins CI"
                         git config user.email "jenkins@betweenus.com"
                         git add k8s/minigame.yaml
-                        git commit -m "ci: update image to ${FULL_IMAGE_NAME}
+                        
+                        # Create local branch to avoid detached HEAD
+                        git checkout -B dev/junho
+                        
+                        git commit -m "[skip ci] ci: update image to ${FULL_IMAGE_NAME}
 
 Build: #${BUILD_NUMBER}
 Commit: ${GIT_COMMIT}
@@ -96,7 +100,7 @@ Commit: ${GIT_COMMIT}
                     """
                     
                     withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
-                        sh "git push https://\${GITHUB_TOKEN}@github.com/BetweenUs-Prj/MiniGameService.git HEAD:${GIT_BRANCH}"
+                        sh "git push https://\${GITHUB_TOKEN}@github.com/BetweenUs-Prj/MiniGameService.git HEAD:refs/heads/dev/junho"
                     }
                 }
             }
