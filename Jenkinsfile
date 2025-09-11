@@ -39,7 +39,7 @@ pipeline {
                 always {
                     script {
                         try {
-                            publishTestResults testResultsPattern: 'build/test-results/**/*.xml'
+                            junit testResultsPattern: 'build/test-results/**/*.xml', allowEmptyResults: true
                         } catch (Exception e) {
                             echo "No test results found or failed to publish: ${e.getMessage()}"
                         }
