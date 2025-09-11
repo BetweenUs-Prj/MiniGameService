@@ -59,8 +59,8 @@ public class ReactionGameBugFixTest {
     public void testParticipantCountNotStuckAtZero() throws InterruptedException {
         // Given: 세션 생성
         Map<String, Object> createSessionBody = new HashMap<>();
+        createSessionBody.put("appointmentId", 1L);
         createSessionBody.put("gameType", "REACTION");
-        createSessionBody.put("capacity", 10);
         createSessionBody.put("penaltyId", 1L);
         
         ResponseEntity<Map> createResponse = restTemplate.postForEntity(
@@ -158,8 +158,8 @@ public class ReactionGameBugFixTest {
     public void testSyncEndpointExists() {
         // Given: 세션 생성
         Map<String, Object> createSessionBody = new HashMap<>();
+        createSessionBody.put("appointmentId", 1L);
         createSessionBody.put("gameType", "REACTION");
-        createSessionBody.put("capacity", 10);
         createSessionBody.put("penaltyId", 1L);
         
         ResponseEntity<Map> createResponse = restTemplate.postForEntity(

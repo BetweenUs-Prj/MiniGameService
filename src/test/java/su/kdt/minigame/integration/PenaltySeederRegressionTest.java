@@ -95,11 +95,11 @@ public class PenaltySeederRegressionTest {
                 .withFailMessage("기본 벌칙 '%s'가 생성되지 않았습니다", slug);
         }
         
-        // 모든 기본 벌칙의 userUid는 "system"이어야 함
+        // 모든 기본 벌칙의 userId는 0L (system)이어야 함
         for (String slug : expectedSlugs) {
             var penalty = penaltyRepository.findBySlug(slug).orElseThrow();
-            assertThat(penalty.getUserUid()).isEqualTo("system")
-                .withFailMessage("기본 벌칙 '%s'의 userUid가 'system'이 아닙니다", slug);
+            assertThat(penalty.getUserUid()).isEqualTo("0")
+                .withFailMessage("기본 벌칙 '%s'의 userUid가 '0' (system)이 아닙니다", slug);
         }
     }
 }
