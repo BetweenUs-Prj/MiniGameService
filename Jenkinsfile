@@ -93,7 +93,9 @@ Commit: ${GIT_COMMIT}
 🤖 Generated with Jenkins CI Pipeline"
 
                         echo "Pushing to repository..."
-                        git push origin ${GIT_BRANCH}
+                        withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
+                            sh "git push https://\${GITHUB_TOKEN}@github.com/BetweenUs-Prj/MiniGameService.git HEAD:${GIT_BRANCH}"
+                        }
                     """
                 }
             }
