@@ -61,9 +61,13 @@ pipeline {
             steps {
                 script {
                     echo "✅ Application JAR built successfully"
-                    echo "🔨 Docker image build: ${FULL_IMAGE_NAME}"
+                    echo "🔨 Building Docker image: ${FULL_IMAGE_NAME}"
+                    
+                    sh "docker build -t ${FULL_IMAGE_NAME} ."
+                    sh "minikube image load ${FULL_IMAGE_NAME}"
+                    
+                    echo "✅ Docker image built and loaded to minikube"
                     echo "📦 Ready for deployment via GitOps"
-                    echo "⚠️  Docker build skipped in CI - handled by ArgoCD"
                 }
             }
         }
