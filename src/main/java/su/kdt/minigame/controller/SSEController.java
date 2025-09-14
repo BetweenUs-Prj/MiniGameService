@@ -29,7 +29,7 @@ public class SSEController {
         
         log.info("[SSE] User {} subscribing to session {}", userUid, sessionId);
         
-        SseEmitter emitter = new SseEmitter(300_000L); // 5분 타임아웃
+        SseEmitter emitter = new SseEmitter(600_000L); // 10분 타임아웃
         
         try {
             sseService.addSubscriber(sessionId, userUid, emitter);
@@ -71,7 +71,7 @@ public class SSEController {
         
         log.info("[SSE] User {} subscribing to reaction game {}", userUid, sessionId);
         
-        SseEmitter emitter = new SseEmitter(300_000L);
+        SseEmitter emitter = new SseEmitter(600_000L); // 10분 타임아웃
         
         try {
             sseService.addReactionSubscriber(sessionId, userUid, emitter);
@@ -101,7 +101,7 @@ public class SSEController {
         
         log.info("[SSE] User {} subscribing to quiz game {}", userUid, sessionId);
         
-        SseEmitter emitter = new SseEmitter(300_000L);
+        SseEmitter emitter = new SseEmitter(600_000L); // 10분 타임아웃
         
         try {
             sseService.addQuizSubscriber(sessionId, userUid, emitter);

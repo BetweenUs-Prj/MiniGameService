@@ -13,6 +13,7 @@ import java.time.Instant;
 @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "reaction_result")
+@AttributeOverrides({}) // 명시적으로 속성 오버라이드 없음을 선언
 public class ReactionResult {
 
     @Id
@@ -20,8 +21,8 @@ public class ReactionResult {
     @Column(name = "result_id")
     private Long resultId;
 
-    @Column(name = "session_id", nullable = false)
-    private Long sessionId;
+    @Column(name = "round_id", nullable = false)
+    private Long roundId;
 
     @Column(name = "user_id", nullable = false)
     private Long userId;
@@ -38,8 +39,8 @@ public class ReactionResult {
     @Column(name = "false_start")
     private Boolean falseStart = false;
 
-    public ReactionResult(Long sessionId, Long userId) {
-        this.sessionId = sessionId;
+    public ReactionResult(Long roundId, Long userId) {
+        this.roundId = roundId;
         this.userId = userId;
         this.falseStart = false;
         this.deltaMs = null;
@@ -57,7 +58,7 @@ public class ReactionResult {
 
     // Compatibility methods and getters
     public Long getRoundId() {
-        return this.sessionId; // For backward compatibility
+        return this.roundId;
     }
 
     public Integer getDeltaMs() {
@@ -89,8 +90,4 @@ public class ReactionResult {
         return String.valueOf(this.userId);
     }
     
-    // For backward compatibility with old session-based methods
-    public Long getSessionId() {
-        return this.sessionId;
-    }
 }

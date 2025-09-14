@@ -43,8 +43,8 @@ COPY --from=builder /app/build/libs/*.jar /app/app.jar
 # 런타임 옵션
 ENV JAVA_OPTS="-XX:+UseG1GC -XX:MaxRAMPercentage=75 -Dfile.encoding=UTF-8" \
     SPRING_PROFILES_ACTIVE=dev \
-    SERVER_PORT=8080
-EXPOSE 8080
+    SERVER_PORT=8084
+EXPOSE 8084
 
 # Actuator 헬스체크
 HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \

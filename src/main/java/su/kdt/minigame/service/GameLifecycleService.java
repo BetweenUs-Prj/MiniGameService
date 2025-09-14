@@ -9,6 +9,7 @@ import su.kdt.minigame.domain.GameSessionMember;
 import su.kdt.minigame.repository.GameRepo;
 import su.kdt.minigame.repository.GameSessionMemberRepo;
 import su.kdt.minigame.service.QuizService;
+import su.kdt.minigame.service.ReactionGameService;
 
 import java.time.Instant;
 import java.util.*;
@@ -29,6 +30,7 @@ public class GameLifecycleService {
     private final GameSessionMemberRepo memberRepo;
     private final SSEService sseService;
     private final QuizService quizService;
+    private final ReactionGameService reactionGameService;
     
     // 세션별 상태 관리
     private final Map<Long, GameSessionState> sessionStates = new ConcurrentHashMap<>();
@@ -262,9 +264,9 @@ public class GameLifecycleService {
             if (session.getGameType() == GameSession.GameType.QUIZ) {
                 final String category = session.getCategory() != null ? session.getCategory() : "상식";
                 try {
-                    log.info("[LIFECYCLE] ⚡ Pre-generating ALL quiz rounds for session {} with category {}", sessionId, category);
-                    quizService.createAllRounds(sessionId, category);
-                    log.info("[LIFECYCLE] ✅ ALL quiz rounds pre-generated successfully for session {} with category {}", sessionId, category);
+                    log.info("[LIFECYCLE] ⚡ Creating first quiz round for session {} with category {}", sessionId, category);
+                    quizService.startRoundForSession(sessionId);
+                    log.info("[LIFECYCLE] ✅ First quiz round created successfully for session {} with category {}", sessionId, category);
                 } catch (org.springframework.dao.DataIntegrityViolationException e) {
                     // 🔒 중복 라운드 생성 시도 → 멱등성 처리
                     log.warn("[LIFECYCLE] ⚠️ Duplicate round creation detected for session {} - proceeding as idempotent success", sessionId);
@@ -273,6 +275,19 @@ public class GameLifecycleService {
                     log.error("[LIFECYCLE] ❌ Failed to create first quiz round atomically for session {}: {}", sessionId, e.getMessage(), e);
                     // 다른 예외는 실제 오류이므로 롤백
                     throw new IllegalStateException("첫 번째 퀴즈 라운드 생성에 실패했습니다: " + e.getMessage(), e);
+                }
+            }
+            
+            // 🚀 리액션 게임인 경우 첫 번째 라운드를 같은 트랜잭션에서 즉시 생성
+            if (session.getGameType() == GameSession.GameType.REACTION) {
+                try {
+                    log.info("[LIFECYCLE] ⚡ Creating first reaction round for session {}", sessionId);
+                    reactionGameService.startReactionGame(sessionId);
+                    log.info("[LIFECYCLE] ✅ First reaction round created successfully for session {}", sessionId);
+                } catch (Exception e) {
+                    log.error("[LIFECYCLE] ❌ Failed to create first reaction round atomically for session {}: {}", sessionId, e.getMessage(), e);
+                    // 예외 발생 시 롤백
+                    throw new IllegalStateException("첫 번째 리액션 라운드 생성에 실패했습니다: " + e.getMessage(), e);
                 }
             }
             

@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: ${SERVER_PORT:8084}
 
 spring:
   application:
@@ -7,10 +7,10 @@ spring:
     
   # ⭐ DataSource 설정 추가 (핵심 수정)
   datasource:
-    url: ${MYSQL_URL:jdbc:mysql://localhost:${MYSQL_PORT:3306}/middle_point_service_db?useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8&allowPublicKeyRetrieval=true}
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:${MYSQL_PORT:3306}/beetween_us_db?useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8&allowPublicKeyRetrieval=true}
     driver-class-name: com.mysql.cj.jdbc.Driver
-    username: ${MYSQL_USER:middle_point_user}
-    password: ${MYSQL_PASSWORD:middle_point_password}
+    username: ${SPRING_DATASOURCE_USERNAME:root}
+    password: ${SPRING_DATASOURCE_PASSWORD:Root123!}
     hikari:
       maximum-pool-size: 30
       minimum-idle: 10
@@ -23,17 +23,23 @@ spring:
   jpa:
     open-in-view: false
     hibernate:
-      ddl-auto: update
-    defer-datasource-initialization: true
+      ddl-auto: validate
     show-sql: true
     properties:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.MySQLDialect
 
+  # Flyway 설정 (JPA 순환 참조 방지)
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    validate-on-migrate: false
+    locations: classpath:db/migration
+    
   sql:
     init:
-      mode: never  # data.sql 비활성화 (PenaltySeeder로 대체)
+      mode: never  # Flyway 사용으로 변경
       encoding: UTF-8
       continue-on-error: true
 
@@ -46,6 +52,18 @@ spring:
     time-zone: UTC
     date-format: yyyy-MM-dd'T'HH:mm:ss
 
+  # SSE/Async 설정 추가 (타임아웃 문제 해결)
+  mvc:
+    async:
+      request-timeout: 600000 # 10분 (기본 30초에서 늘림)
+
+  # HTTP 인코딩 설정 (한글 깨짐 방지)
+  http:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+
 # Actuator 설정
 management:
   endpoints:
@@ -55,6 +73,8 @@ management:
   endpoint:
     health:
       show-details: always
+      probes:
+        enabled: true
 
 # 로깅 설정
 logging:

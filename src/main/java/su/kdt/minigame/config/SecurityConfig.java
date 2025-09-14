@@ -71,7 +71,8 @@ public class SecurityConfig {
             "X-Request-ID", 
             "X-Response-Time",
             "Access-Control-Allow-Origin",
-            "Access-Control-Allow-Credentials"
+            "Access-Control-Allow-Credentials",
+            "x-round-phase"
         ));
         
         configuration.setAllowCredentials(true);

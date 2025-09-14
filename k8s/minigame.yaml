@@ -1,0 +1,145 @@
+# =========================================
+# Namespace (이미 있으면 생략 가능)
+# =========================================
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: betweenus
+
+---
+# =========================================
+# Service (8084)
+# =========================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: minigame-service
+  namespace: betweenus
+spec:
+  selector:
+    app: minigame-service
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8084
+
+---
+# =========================================
+# Deployment (Spring Boot, 8084)
+#  - DB/Redis는 같은 네임스페이스에 'mysql','redis' 서비스가 있다고 가정
+#  - DB 계정은 'db-secret'에 있다고 가정 (키: MYSQL_USER, MYSQL_PASSWORD)
+#  - /actuator/health 사용
+# =========================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minigame-service
+  namespace: betweenus
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: minigame-service }
+  template:
+    metadata:
+      labels: { app: minigame-service }
+    spec:
+      containers:
+        - name: app
+          image: minigame-service:26-9121f09   # Updated by Jenkins CI
+          ports:
+            - containerPort: 8084
+          env:
+            - name: SERVER_PORT
+              value: "8084"
+            - name: SPRING_PROFILES_ACTIVE
+              value: "dev"
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:mysql://mysql:3306/beetween_us_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8"
+            - name: SPRING_DATASOURCE_USERNAME
+              value: "root"
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: "Root123!"
+            - name: SPRING_DATASOURCE_DRIVER_CLASS_NAME
+              value: "com.mysql.cj.jdbc.Driver"
+            - name: SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT
+              value: "20000"
+            - name: SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE
+              value: "10"
+            - name: REDIS_HOST
+              value: "redis"
+            - name: REDIS_PORT
+              value: "6379"
+          readinessProbe:
+            httpGet: { path: /actuator/health, port: 8084 }
+            initialDelaySeconds: 90
+            periodSeconds: 10
+            failureThreshold: 10
+          livenessProbe:
+            httpGet: { path: /actuator/health, port: 8084 }
+            initialDelaySeconds: 120
+            periodSeconds: 15
+            failureThreshold: 10
+          startupProbe:
+            tcpSocket: { port: 8084 }
+            periodSeconds: 5
+            failureThreshold: 50
+          resources:
+            requests: { cpu: "250m", memory: "512Mi" }
+            limits:   { cpu: "1000m", memory: "1Gi" }
+
+---
+# =========================================
+# Ingress (FE는 /, 게임 API는 /api)
+#   - NGINX Ingress addon이 켜져 있어야 함
+#   - SSE/WebSocket 타임아웃 및 버퍼링 해제
+# =========================================
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: betweenus
+  namespace: betweenus
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: betweenus-fe
+                port: { number: 80 }
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: minigame-service
+                port: { number: 80 }
+
+---
+# =========================================
+# (선택) HPA - CPU 기준 자동 확장
+# =========================================
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: minigame-service-hpa
+  namespace: betweenus
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: minigame-service
+  minReplicas: 2
+  maxReplicas: 6
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70

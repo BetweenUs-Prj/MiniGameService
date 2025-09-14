@@ -1,6 +1,9 @@
 spring:
   datasource:
-    url: jdbc:mysql://127.0.0.1:3306/middle_point_service_db?useUnicode=true&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
+    url: jdbc:mysql://127.0.0.1:3306/beetween_us_db?useUnicode=true&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: root
-    password: 1111
+    password: Root123!
+    hikari:
+      connection-timeout: 20000
+      maximum-pool-size: 10
